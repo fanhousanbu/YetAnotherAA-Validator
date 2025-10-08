@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import WebSocket, { WebSocketServer } from "ws";
+import type { IncomingMessage } from "http";
 import { v4 as uuidv4 } from "uuid";
 import * as fs from "fs";
 import * as path from "path";
@@ -163,7 +164,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
       path: "/ws",
     });
 
-    this.server.on("connection", (ws: WebSocket, request) => {
+    this.server.on("connection", (ws: WebSocket, request: IncomingMessage) => {
       const clientIP = request.socket.remoteAddress || "unknown";
       console.log(`🔗 New gossip connection from ${clientIP}`);
 
