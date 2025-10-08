@@ -7,3 +7,6 @@ node_dev_*.json
 node_modules/
 
 dist/
+
+# IDE
+.vscode/
