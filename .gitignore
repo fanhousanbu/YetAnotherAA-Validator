@@ -1,2 +1,4 @@
 data/*
-demo/
+
+# Node development config files
+node_dev_*.json
