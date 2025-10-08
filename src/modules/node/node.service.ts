@@ -1,4 +1,10 @@
-import { Injectable, OnModuleInit, Logger, Inject, forwardRef } from "@nestjs/common";
+import {
+  Injectable,
+  OnModuleInit,
+  Logger,
+  Inject,
+  forwardRef,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NodeKeyPair, NodeState } from "../../interfaces/node.interface.js";
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "fs";
@@ -18,7 +24,7 @@ export class NodeService implements OnModuleInit {
     @Inject(forwardRef(() => BlsService))
     private blsService: BlsService,
     private blockchainService: BlockchainService,
-    private configService: ConfigService
+    private configService: ConfigService,
   ) {}
 
   async onModuleInit() {
@@ -41,8 +47,12 @@ export class NodeService implements OnModuleInit {
   }
 
   private loadContractAddress(): void {
-    this.contractAddress = this.configService.get<string>("validatorContractAddress")!;
-    this.logger.log(`Using contract address from environment: ${this.contractAddress}`);
+    this.contractAddress = this.configService.get<string>(
+      "validatorContractAddress",
+    )!;
+    this.logger.log(
+      `Using contract address from environment: ${this.contractAddress}`,
+    );
   }
 
   private async initializeWithSpecificNodeId(nodeId: string): Promise<void> {
@@ -50,7 +60,9 @@ export class NodeService implements OnModuleInit {
 
     if (existsSync(this.nodeStateFilePath)) {
       this.loadExistingNodeState();
-      this.logger.log(`Loaded existing node state for ${this.nodeState.nodeId}`);
+      this.logger.log(
+        `Loaded existing node state for ${this.nodeState.nodeId}`,
+      );
     } else {
       await this.createNewNodeState(nodeId);
       this.logger.log(`Created new node state for ${this.nodeState.nodeId}`);
@@ -75,15 +87,25 @@ export class NodeService implements OnModuleInit {
       const newNodeId = this.generateNodeId();
       this.nodeStateFilePath = join(process.cwd(), `node_${newNodeId}.json`);
       await this.createNewNodeState(newNodeId);
-      this.logger.log(`No existing nodes found. Created new node: ${newNodeId}`);
+      this.logger.log(
+        `No existing nodes found. Created new node: ${newNodeId}`,
+      );
     } else if (existingNodeFiles.length === 1) {
       this.nodeStateFilePath = existingNodeFiles[0];
       this.loadExistingNodeState();
-      this.logger.log(`Auto-discovered and loaded node: ${this.nodeState.nodeId}`);
+      this.logger.log(
+        `Auto-discovered and loaded node: ${this.nodeState.nodeId}`,
+      );
     } else {
-      this.logger.error(`Multiple node files found: ${existingNodeFiles.join(", ")}`);
-      this.logger.error("Please specify NODE_ID or NODE_STATE_FILE environment variable");
-      throw new Error("Ambiguous node selection: multiple node state files found");
+      this.logger.error(
+        `Multiple node files found: ${existingNodeFiles.join(", ")}`,
+      );
+      this.logger.error(
+        "Please specify NODE_ID or NODE_STATE_FILE environment variable",
+      );
+      throw new Error(
+        "Ambiguous node selection: multiple node state files found",
+      );
     }
   }
 
@@ -91,8 +113,8 @@ export class NodeService implements OnModuleInit {
     try {
       const files = readdirSync(process.cwd());
       return files
-        .filter(file => file.startsWith("node_") && file.endsWith(".json"))
-        .map(file => join(process.cwd(), file));
+        .filter((file) => file.startsWith("node_") && file.endsWith(".json"))
+        .map((file) => join(process.cwd(), file));
     } catch (error) {
       this.logger.warn(`Error reading directory: ${error}`);
       return [];
@@ -115,7 +137,8 @@ export class NodeService implements OnModuleInit {
   private async createNewNodeState(nodeId: string): Promise<void> {
     const privateKeyBytes = randomBytes(32);
     const privateKey = "0x" + privateKeyBytes.toString("hex");
-    const publicKey = await this.blsService.getPublicKeyFromPrivateKey(privateKey);
+    const publicKey =
+      await this.blsService.getPublicKeyFromPrivateKey(privateKey);
 
     this.nodeState = {
       nodeId,
@@ -133,7 +156,11 @@ export class NodeService implements OnModuleInit {
 
   private saveNodeState(): void {
     try {
-      writeFileSync(this.nodeStateFilePath, JSON.stringify(this.nodeState, null, 2), "utf8");
+      writeFileSync(
+        this.nodeStateFilePath,
+        JSON.stringify(this.nodeState, null, 2),
+        "utf8",
+      );
     } catch (error: any) {
       throw new Error(`Failed to save node state: ${error.message}`);
     }
@@ -158,10 +185,14 @@ export class NodeService implements OnModuleInit {
     };
   }
 
-  async registerOnChain(): Promise<{ success: boolean; txHash?: string; message: string }> {
+  async registerOnChain(): Promise<{
+    success: boolean;
+    txHash?: string;
+    message: string;
+  }> {
     if (!this.blockchainService.isConfigured()) {
       throw new Error(
-        "Blockchain service not configured. Set ETH_PRIVATE_KEY and ETH_RPC_URL environment variables."
+        "Blockchain service not configured. Set ETH_PRIVATE_KEY and ETH_RPC_URL environment variables.",
       );
     }
 
@@ -169,7 +200,7 @@ export class NodeService implements OnModuleInit {
       // Check current registration status on-chain
       const isRegistered = await this.blockchainService.checkNodeRegistration(
         this.contractAddress,
-        this.nodeState.nodeId
+        this.nodeState.nodeId,
       );
 
       if (isRegistered) {
@@ -195,12 +226,13 @@ export class NodeService implements OnModuleInit {
 
       const { sigs } = await import("../../utils/bls.util.js");
       const publicKeyPoint = sigs.getPublicKey(privateKeyBytes);
-      const eip2537PublicKey = this.blsService.encodePublicKeyToEIP2537(publicKeyPoint);
+      const eip2537PublicKey =
+        this.blsService.encodePublicKeyToEIP2537(publicKeyPoint);
 
       const txHash = await this.blockchainService.registerNodeOnChain(
         this.contractAddress,
         this.nodeState.nodeId,
-        eip2537PublicKey
+        eip2537PublicKey,
       );
 
       if (txHash === "already_registered") {
@@ -219,7 +251,9 @@ export class NodeService implements OnModuleInit {
       this.nodeState.registeredAt = new Date().toISOString();
       this.saveNodeState();
 
-      this.logger.log(`Node ${this.nodeState.nodeId} registered successfully. TX: ${txHash}`);
+      this.logger.log(
+        `Node ${this.nodeState.nodeId} registered successfully. TX: ${txHash}`,
+      );
 
       return {
         success: true,

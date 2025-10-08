@@ -65,14 +65,18 @@ export class GossipEndpointValidator {
    */
   private static loadDnsConfig(): DnsRebindingConfig {
     // Use cached config if still valid
-    if (this.dnsConfig && Date.now() - this.configLastLoaded < this.CONFIG_CACHE_TTL) {
+    if (
+      this.dnsConfig &&
+      Date.now() - this.configLastLoaded < this.CONFIG_CACHE_TTL
+    ) {
       return this.dnsConfig;
     }
 
     try {
       // Try to load from environment variable first
       const configPath =
-        process.env.DNS_REBINDING_CONFIG_PATH || path.join(__dirname, "dns-rebinding-config.json");
+        process.env.DNS_REBINDING_CONFIG_PATH ||
+        path.join(__dirname, "dns-rebinding-config.json");
 
       // Also support config from environment variable directly
       const configFromEnv = process.env.DNS_REBINDING_CONFIG;
@@ -97,7 +101,9 @@ export class GossipEndpointValidator {
             requireTLD: true,
           },
         };
-        console.warn("⚠️ Using fallback DNS rebinding config. Consider providing a config file.");
+        console.warn(
+          "⚠️ Using fallback DNS rebinding config. Consider providing a config file.",
+        );
       }
 
       this.configLastLoaded = Date.now();
@@ -123,7 +129,9 @@ export class GossipEndpointValidator {
    */
   private static isDevelopmentMode(): boolean {
     const nodeEnv = process.env.NODE_ENV?.toLowerCase();
-    return nodeEnv === "development" || nodeEnv === "dev" || nodeEnv === "local";
+    return (
+      nodeEnv === "development" || nodeEnv === "dev" || nodeEnv === "local"
+    );
   }
 
   /**
@@ -133,7 +141,10 @@ export class GossipEndpointValidator {
    * @returns Sanitized endpoint URL
    * @throws Error if the endpoint is invalid or potentially dangerous
    */
-  public static validateEndpoint(endpoint: string, allowPrivateNetworks = false): string {
+  public static validateEndpoint(
+    endpoint: string,
+    allowPrivateNetworks = false,
+  ): string {
     // Basic validation
     if (!endpoint || typeof endpoint !== "string") {
       throw new Error("Endpoint must be a non-empty string");
@@ -153,7 +164,7 @@ export class GossipEndpointValidator {
     // Validate protocol
     if (!this.ALLOWED_PROTOCOLS.includes(url.protocol)) {
       throw new Error(
-        `Invalid protocol: ${url.protocol}. Allowed protocols: ${this.ALLOWED_PROTOCOLS.join(", ")}`
+        `Invalid protocol: ${url.protocol}. Allowed protocols: ${this.ALLOWED_PROTOCOLS.join(", ")}`,
       );
     }
 
@@ -162,10 +173,17 @@ export class GossipEndpointValidator {
 
     // In development mode, allow localhost connections
     const isDev = this.isDevelopmentMode();
-    if (isDev && (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1")) {
-      console.log(`🔧 Development mode: Allowing local connection to ${hostname}`);
+    if (
+      isDev &&
+      (hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "::1")
+    ) {
+      console.log(
+        `🔧 Development mode: Allowing local connection to ${hostname}`,
+      );
       console.warn(
-        `⚠️ SECURITY WARNING: Localhost connections are enabled. DO NOT use in production!`
+        `⚠️ SECURITY WARNING: Localhost connections are enabled. DO NOT use in production!`,
       );
       // Skip further hostname validation for localhost in dev mode
     } else {
@@ -186,7 +204,9 @@ export class GossipEndpointValidator {
           // Check against blocked IP patterns
           for (const pattern of this.BLOCKED_IP_PATTERNS) {
             if (pattern.test(hostname)) {
-              throw new Error(`Private or reserved IP address not allowed: ${hostname}`);
+              throw new Error(
+                `Private or reserved IP address not allowed: ${hostname}`,
+              );
             }
           }
         }
@@ -204,7 +224,7 @@ export class GossipEndpointValidator {
       // Check against allowed domains first (whitelist)
       if (config.allowedDomains && config.allowedDomains.length > 0) {
         const isAllowed = config.allowedDomains.some(
-          allowed => hostname === allowed || hostname.endsWith(`.${allowed}`)
+          (allowed) => hostname === allowed || hostname.endsWith(`.${allowed}`),
         );
         if (isAllowed) {
           return url.toString(); // Skip further checks for whitelisted domains
@@ -218,7 +238,7 @@ export class GossipEndpointValidator {
           hostname.endsWith(`.${suspiciousEntry.domain}`)
         ) {
           console.warn(
-            `⚠️ Blocked ${suspiciousEntry.risk} risk domain: ${hostname} (${suspiciousEntry.reason})`
+            `⚠️ Blocked ${suspiciousEntry.risk} risk domain: ${hostname} (${suspiciousEntry.reason})`,
           );
           throw new Error(`DNS rebinding domain blocked: ${hostname}`);
         }
@@ -229,7 +249,7 @@ export class GossipEndpointValidator {
         const regex = new RegExp(patternEntry.pattern);
         if (regex.test(hostname)) {
           console.warn(
-            `⚠️ Blocked by pattern (${patternEntry.risk} risk): ${hostname} - ${patternEntry.description}`
+            `⚠️ Blocked by pattern (${patternEntry.risk} risk): ${hostname} - ${patternEntry.description}`,
           );
           throw new Error(`Suspicious hostname pattern detected: ${hostname}`);
         }
@@ -240,7 +260,9 @@ export class GossipEndpointValidator {
         // Check subdomain depth
         const subdomainCount = (hostname.match(/\./g) || []).length;
         if (subdomainCount > config.customRules.allowSubdomainDepth) {
-          throw new Error(`Too many subdomain levels (${subdomainCount}): ${hostname}`);
+          throw new Error(
+            `Too many subdomain levels (${subdomainCount}): ${hostname}`,
+          );
         }
 
         // Check for numeric subdomains (potential IP encoding)
@@ -259,15 +281,27 @@ export class GossipEndpointValidator {
     }
 
     // Validate port
-    const port = url.port ? parseInt(url.port, 10) : url.protocol === "wss:" ? 443 : 80;
-    if (isNaN(port) || port < this.ALLOWED_PORTS.min || port > this.ALLOWED_PORTS.max) {
+    const port = url.port
+      ? parseInt(url.port, 10)
+      : url.protocol === "wss:"
+        ? 443
+        : 80;
+    if (
+      isNaN(port) ||
+      port < this.ALLOWED_PORTS.min ||
+      port > this.ALLOWED_PORTS.max
+    ) {
       throw new Error(
-        `Invalid port: ${port}. Port must be between ${this.ALLOWED_PORTS.min} and ${this.ALLOWED_PORTS.max}`
+        `Invalid port: ${port}. Port must be between ${this.ALLOWED_PORTS.min} and ${this.ALLOWED_PORTS.max}`,
       );
     }
 
     // Warn about non-standard ports (but allow them)
-    if (!this.ALLOWED_PORTS.defaults.includes(port) && port !== 443 && port !== 80) {
+    if (
+      !this.ALLOWED_PORTS.defaults.includes(port) &&
+      port !== 443 &&
+      port !== 80
+    ) {
       console.warn(`⚠️ Non-standard port detected: ${port}`);
     }
 
@@ -293,7 +327,10 @@ export class GossipEndpointValidator {
    * @param allowPrivateNetworks Whether to allow connections to private networks
    * @returns Array of validated endpoints
    */
-  public static validateEndpoints(endpoints: string[], allowPrivateNetworks = false): string[] {
+  public static validateEndpoints(
+    endpoints: string[],
+    allowPrivateNetworks = false,
+  ): string[] {
     const validatedEndpoints: string[] = [];
     const errors: string[] = [];
 
@@ -302,7 +339,8 @@ export class GossipEndpointValidator {
         const validated = this.validateEndpoint(endpoint, allowPrivateNetworks);
         validatedEndpoints.push(validated);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         errors.push(`${endpoint}: ${errorMessage}`);
       }
     }
@@ -348,8 +386,11 @@ export class GossipEndpointValidator {
         const validated = this.validateEndpoint(endpoint, false);
         whitelist.add(validated);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`Failed to add endpoint to whitelist: ${endpoint} - ${errorMessage}`);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.error(
+          `Failed to add endpoint to whitelist: ${endpoint} - ${errorMessage}`,
+        );
       }
     }
 

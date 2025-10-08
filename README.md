@@ -217,7 +217,6 @@ NODE_STATE_FILE=/path/to/node_state.json npm start
 npm start  # Discovers existing node files automatically
 ```
 
-
 ## Blockchain Integration
 
 ### On-chain Registration
@@ -466,5 +465,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Support
 
 For issues and questions:
+
 - GitHub Issues: https://github.com/fanhousanbu/YetAnotherAA-Signer/issues
 - Main Project: https://github.com/fanhousanbu/YetAnotherAA

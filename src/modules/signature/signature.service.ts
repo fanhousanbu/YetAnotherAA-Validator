@@ -2,14 +2,17 @@ import { Injectable, BadRequestException } from "@nestjs/common";
 import { ethers } from "ethers";
 import { BlsService } from "../bls/bls.service.js";
 import { NodeService } from "../node/node.service.js";
-import { SignatureResult, AggregateSignatureResult } from "../../interfaces/signature.interface.js";
+import {
+  SignatureResult,
+  AggregateSignatureResult,
+} from "../../interfaces/signature.interface.js";
 import { sigs, bls, BLS_DST } from "../../utils/bls.util.js";
 
 @Injectable()
 export class SignatureService {
   constructor(
     private readonly blsService: BlsService,
-    private readonly nodeService: NodeService
+    private readonly nodeService: NodeService,
   ) {}
 
   async signMessage(message: string): Promise<SignatureResult> {
@@ -17,9 +20,13 @@ export class SignatureService {
     return await this.blsService.signMessage(message, node);
   }
 
-  async aggregateExternalSignatures(signatureStrings: string[]): Promise<AggregateSignatureResult> {
+  async aggregateExternalSignatures(
+    signatureStrings: string[],
+  ): Promise<AggregateSignatureResult> {
     if (signatureStrings.length < 1) {
-      throw new BadRequestException("At least 1 signature is required for aggregation");
+      throw new BadRequestException(
+        "At least 1 signature is required for aggregation",
+      );
     }
 
     const signatures = [];
@@ -41,7 +48,8 @@ export class SignatureService {
     }
 
     // Aggregate signatures only
-    const aggregatedSignature = await this.blsService.aggregateSignaturesOnly(signatures);
+    const aggregatedSignature =
+      await this.blsService.aggregateSignaturesOnly(signatures);
 
     return {
       signature: this.blsService.encodeToEIP2537(aggregatedSignature), // Return EIP-2537 format
@@ -53,36 +61,48 @@ export class SignatureService {
     // This is a placeholder - we need to implement proper EIP-2537 parsing
     // For now, throw an error indicating EIP format aggregation is not yet supported
     throw new BadRequestException(
-      "EIP-2537 format aggregation not yet implemented. Please use compact format."
+      "EIP-2537 format aggregation not yet implemented. Please use compact format.",
     );
   }
 
   async verifyAggregatedSignature(
     signatureHex: string,
     publicKeyHexes: string[],
-    message: string
+    message: string,
   ): Promise<{ valid: boolean; message?: string }> {
     try {
       // Convert hex signature to BLS signature
       const signature = this.hexToBlsSignature(
-        signatureHex.startsWith("0x") ? signatureHex.substring(2) : signatureHex
+        signatureHex.startsWith("0x")
+          ? signatureHex.substring(2)
+          : signatureHex,
       );
 
       // Convert hex public keys to BLS public keys
       const publicKeys = [];
       for (const pubKeyHex of publicKeyHexes) {
-        const cleanHex = pubKeyHex.startsWith("0x") ? pubKeyHex.substring(2) : pubKeyHex;
+        const cleanHex = pubKeyHex.startsWith("0x")
+          ? pubKeyHex.substring(2)
+          : pubKeyHex;
         const pubKey = bls.G1.Point.fromHex(cleanHex);
         publicKeys.push(pubKey);
       }
 
       // Aggregate public keys
-      const aggregatedPubKey = publicKeys.reduce((acc, pubKey) => acc.add(pubKey));
+      const aggregatedPubKey = publicKeys.reduce((acc, pubKey) =>
+        acc.add(pubKey),
+      );
 
       // Verify the aggregated signature
       const messageBytes = ethers.getBytes(message);
-      const messagePoint = await bls.G2.hashToCurve(messageBytes, { DST: BLS_DST });
-      const valid = await sigs.verify(signature, messagePoint, aggregatedPubKey);
+      const messagePoint = await bls.G2.hashToCurve(messageBytes, {
+        DST: BLS_DST,
+      });
+      const valid = await sigs.verify(
+        signature,
+        messagePoint,
+        aggregatedPubKey,
+      );
 
       return {
         valid,

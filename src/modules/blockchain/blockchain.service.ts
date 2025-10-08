@@ -16,18 +16,22 @@ export class BlockchainService {
     const privateKey = this.configService.get<string>("ethPrivateKey");
 
     // Create provider (read-only connection)
-    this.provider = new ethers.JsonRpcProvider(this.configService.get<string>("ethRpcUrl"));
+    this.provider = new ethers.JsonRpcProvider(
+      this.configService.get<string>("ethRpcUrl"),
+    );
 
     if (!privateKey || privateKey === "your_eth_private_key_here") {
       this.logger.warn(
-        "ETH_PRIVATE_KEY not set or using placeholder, blockchain operations will be disabled"
+        "ETH_PRIVATE_KEY not set or using placeholder, blockchain operations will be disabled",
       );
       return;
     }
 
     try {
       this.wallet = new ethers.Wallet(privateKey, this.provider);
-      this.logger.log(`Blockchain service initialized with wallet: ${this.wallet.address}`);
+      this.logger.log(
+        `Blockchain service initialized with wallet: ${this.wallet.address}`,
+      );
     } catch (error: any) {
       this.logger.error(`Invalid private key provided: ${error.message}`);
       this.logger.warn("Blockchain write operations will be disabled");
@@ -37,10 +41,12 @@ export class BlockchainService {
   async registerNodeOnChain(
     contractAddress: string,
     nodeId: string,
-    publicKey: string
+    publicKey: string,
   ): Promise<string> {
     if (!this.wallet) {
-      throw new Error("Blockchain not configured. Set ETH_PRIVATE_KEY environment variable.");
+      throw new Error(
+        "Blockchain not configured. Set ETH_PRIVATE_KEY environment variable.",
+      );
     }
 
     const abi = [
@@ -58,7 +64,9 @@ export class BlockchainService {
         return "already_registered";
       }
 
-      this.logger.log(`Registering node ${nodeId} on contract ${contractAddress}`);
+      this.logger.log(
+        `Registering node ${nodeId} on contract ${contractAddress}`,
+      );
 
       // Call registerPublicKey function
       const tx = await contract.registerPublicKey(nodeId, publicKey);
@@ -75,12 +83,17 @@ export class BlockchainService {
     }
   }
 
-  async checkNodeRegistration(contractAddress: string, nodeId: string): Promise<boolean> {
+  async checkNodeRegistration(
+    contractAddress: string,
+    nodeId: string,
+  ): Promise<boolean> {
     if (!this.provider) {
       throw new Error("Blockchain provider not configured");
     }
 
-    const abi = ["function isRegistered(bytes32 nodeId) external view returns (bool)"];
+    const abi = [
+      "function isRegistered(bytes32 nodeId) external view returns (bool)",
+    ];
 
     const contract = new ethers.Contract(contractAddress, abi, this.provider);
 
@@ -88,7 +101,9 @@ export class BlockchainService {
       const isRegistered = await contract.isRegistered(nodeId);
       return isRegistered;
     } catch (error: any) {
-      this.logger.error(`Failed to check registration status: ${error.message}`);
+      this.logger.error(
+        `Failed to check registration status: ${error.message}`,
+      );
       throw error;
     }
   }
@@ -98,7 +113,9 @@ export class BlockchainService {
       throw new Error("Blockchain provider not configured");
     }
 
-    const abi = ["function getRegisteredNodeCount() external view returns (uint256)"];
+    const abi = [
+      "function getRegisteredNodeCount() external view returns (uint256)",
+    ];
 
     const contract = new ethers.Contract(contractAddress, abi, this.provider);
 
@@ -106,7 +123,9 @@ export class BlockchainService {
       const count = await contract.getRegisteredNodeCount();
       return Number(count);
     } catch (error: any) {
-      this.logger.error(`Failed to get registered node count: ${error.message}`);
+      this.logger.error(
+        `Failed to get registered node count: ${error.message}`,
+      );
       throw error;
     }
   }

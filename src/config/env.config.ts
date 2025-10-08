@@ -46,12 +46,16 @@ export class EnvConfigService {
       // Server
       port,
       host: "0.0.0.0",
-      publicUrl: this.configService.get<string>("PUBLIC_URL", `http://localhost:${port}`),
+      publicUrl: this.configService.get<string>(
+        "PUBLIC_URL",
+        `http://localhost:${port}`,
+      ),
 
       // Blockchain
       ethRpcUrl: this.configService.get<string>("ETH_RPC_URL") || "",
       ethPrivateKey: this.configService.get<string>("ETH_PRIVATE_KEY"),
-      validatorContractAddress: this.configService.get<string>("VALIDATOR_CONTRACT_ADDRESS") || "",
+      validatorContractAddress:
+        this.configService.get<string>("VALIDATOR_CONTRACT_ADDRESS") || "",
 
       // Node Configuration
       nodeId: this.configService.get<string>("NODE_ID"),
@@ -60,38 +64,50 @@ export class EnvConfigService {
       // Gossip Network
       gossipPublicUrl: this.configService.get<string>(
         "GOSSIP_PUBLIC_URL",
-        `ws://localhost:${port}/ws`
+        `ws://localhost:${port}/ws`,
       ),
       gossipBootstrapPeers: this.parseBootstrapPeers(),
-      gossipInterval: parseInt(this.configService.get<string>("GOSSIP_INTERVAL", "5000"), 10),
-      gossipFanout: parseInt(this.configService.get<string>("GOSSIP_FANOUT", "3"), 10),
-      gossipMaxTtl: parseInt(this.configService.get<string>("GOSSIP_MAX_TTL", "5"), 10),
+      gossipInterval: parseInt(
+        this.configService.get<string>("GOSSIP_INTERVAL", "5000"),
+        10,
+      ),
+      gossipFanout: parseInt(
+        this.configService.get<string>("GOSSIP_FANOUT", "3"),
+        10,
+      ),
+      gossipMaxTtl: parseInt(
+        this.configService.get<string>("GOSSIP_MAX_TTL", "5"),
+        10,
+      ),
       gossipHeartbeatInterval: parseInt(
         this.configService.get<string>("GOSSIP_HEARTBEAT_INTERVAL", "10000"),
-        10
+        10,
       ),
       gossipSuspicionTimeout: parseInt(
         this.configService.get<string>("GOSSIP_SUSPICION_TIMEOUT", "30000"),
-        10
+        10,
       ),
       gossipCleanupTimeout: parseInt(
         this.configService.get<string>("GOSSIP_CLEANUP_TIMEOUT", "60000"),
-        10
+        10,
       ),
       gossipMaxMessageHistory: parseInt(
         this.configService.get<string>("GOSSIP_MAX_MESSAGE_HISTORY", "1000"),
-        10
+        10,
       ),
     };
   }
 
   private parseBootstrapPeers(): string[] {
-    const peersString = this.configService.get<string>("GOSSIP_BOOTSTRAP_PEERS", "");
+    const peersString = this.configService.get<string>(
+      "GOSSIP_BOOTSTRAP_PEERS",
+      "",
+    );
     if (!peersString) return [];
     return peersString
       .split(",")
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
   }
 
   private validateConfig(): void {
@@ -128,7 +144,7 @@ export class EnvConfigService {
     // If there are errors, throw them all at once
     if (errors.length > 0) {
       throw new Error(
-        `Environment configuration validation failed:\n${errors.map(e => `  - ${e}`).join("\n")}`
+        `Environment configuration validation failed:\n${errors.map((e) => `  - ${e}`).join("\n")}`,
       );
     }
 
@@ -147,7 +163,7 @@ export class EnvConfigService {
   static get(): EnvironmentConfig {
     if (!EnvConfigService.instance) {
       throw new Error(
-        "EnvConfigService not initialized. Please ensure it is imported in AppModule"
+        "EnvConfigService not initialized. Please ensure it is imported in AppModule",
       );
     }
     return EnvConfigService.instance;

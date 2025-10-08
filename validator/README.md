@@ -1,14 +1,18 @@
 # AAStarValidator Smart Contracts
 
-Solidity smart contracts for BLS signature verification and ERC-4337 account abstraction. These contracts work in conjunction with the BLS signer service to provide secure, aggregated signature verification on-chain.
+Solidity smart contracts for BLS signature verification and ERC-4337 account
+abstraction. These contracts work in conjunction with the BLS signer service to
+provide secure, aggregated signature verification on-chain.
 
 ## Overview
 
 This package contains the complete smart contract implementation for:
 
 - **AAStarValidator**: BLS signature verification contract
-- **AAStarAccount**: ERC-4337 compliant smart contract accounts (v0.6, v0.7, v0.8)
-- **AAStarAccountFactory**: Account creation factories for multiple EntryPoint versions
+- **AAStarAccount**: ERC-4337 compliant smart contract accounts (v0.6, v0.7,
+  v0.8)
+- **AAStarAccountFactory**: Account creation factories for multiple EntryPoint
+  versions
 - **Deployment Scripts**: Foundry scripts for contract deployment
 
 ## Architecture
@@ -17,14 +21,18 @@ This package contains the complete smart contract implementation for:
 
 #### AAStarValidator.sol
 
-The validator contract manages BLS public key registration and signature verification:
+The validator contract manages BLS public key registration and signature
+verification:
 
 - **Node Registration**: Register BLS public keys for signer nodes
 - **Signature Verification**: Verify aggregated BLS signatures on-chain
-- **EIP-2537 Integration**: Uses Ethereum's BLS12-381 precompiles for efficient verification
+- **EIP-2537 Integration**: Uses Ethereum's BLS12-381 precompiles for efficient
+  verification
 
 Key functions:
-- `registerPublicKey(bytes32 nodeId, bytes calldata publicKey)` - Register a signer node
+
+- `registerPublicKey(bytes32 nodeId, bytes calldata publicKey)` - Register a
+  signer node
 - `isRegistered(bytes32 nodeId)` - Check if a node is registered
 - `verifyAggregateSignature(...)` - Verify aggregated BLS signatures
 
@@ -71,7 +79,8 @@ validator/
 
 ## Prerequisites
 
-- [Foundry](https://book.getfoundry.sh/getting-started/installation) - Ethereum development toolchain
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) - Ethereum
+  development toolchain
 - Node.js >= 18.0.0 (for scripts)
 
 ## Installation
@@ -315,15 +324,19 @@ forge script script/DeployAAStarV7.s.sol:DeployAAStarV7 \
 ### Common Issues
 
 **Issue**: `Invalid BLS public key`
+
 - Solution: Ensure public key is 96 bytes compressed G1 point
 
 **Issue**: `Signature verification failed`
+
 - Solution: Check that message point matches signed message hash
 
 **Issue**: `OutOfGas` during verification
+
 - Solution: Increase gas limit based on number of signers
 
 **Issue**: `Node already registered`
+
 - Solution: Each node can only be registered once
 
 ## References
@@ -349,5 +362,6 @@ Contributions are welcome! Please ensure:
 ## Support
 
 For issues and questions:
+
 - GitHub Issues: https://github.com/fanhousanbu/YetAnotherAA-Signer/issues
 - Main Project: https://github.com/fanhousanbu/YetAnotherAA

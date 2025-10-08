@@ -14,11 +14,20 @@ export class NodeController {
     schema: {
       type: "object",
       properties: {
-        nodeId: { type: "string", description: "Unique identifier of the node" },
+        nodeId: {
+          type: "string",
+          description: "Unique identifier of the node",
+        },
         nodeName: { type: "string", description: "Name of the node" },
         publicKey: { type: "string", description: "Public key in hex format" },
-        privateKey: { type: "string", description: "Always hidden for security" },
-        registrationStatus: { type: "string", description: "Registration status on-chain" },
+        privateKey: {
+          type: "string",
+          description: "Always hidden for security",
+        },
+        registrationStatus: {
+          type: "string",
+          description: "Registration status on-chain",
+        },
         createdAt: { type: "string", description: "Node creation timestamp" },
         contractAddress: { type: "string", description: "Contract address" },
       },
@@ -40,10 +49,16 @@ export class NodeController {
     schema: {
       type: "object",
       properties: {
-        success: { type: "boolean", description: "Registration success status" },
+        success: {
+          type: "boolean",
+          description: "Registration success status",
+        },
         message: { type: "string", description: "Result message" },
         nodeId: { type: "string", description: "Node ID that was registered" },
-        txHash: { type: "string", description: "Transaction hash (if new registration)" },
+        txHash: {
+          type: "string",
+          description: "Transaction hash (if new registration)",
+        },
         contractAddress: { type: "string", description: "Contract address" },
       },
     },

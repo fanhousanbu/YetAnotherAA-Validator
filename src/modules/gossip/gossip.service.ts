@@ -47,7 +47,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private configService: ConfigService,
-    private nodeService: NodeService
+    private nodeService: NodeService,
   ) {
     this.port = parseInt(this.configService.get("PORT") || "3000", 10);
 
@@ -61,27 +61,42 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     console.log(`📝 Raw bootstrap peers: ${rawBootstrapPeers.join(", ")}`);
 
     // Validate bootstrap peers using whitelist mechanism
-    this.bootstrapPeers = GossipWhitelistValidator.validateEndpoints(rawBootstrapPeers);
+    this.bootstrapPeers =
+      GossipWhitelistValidator.validateEndpoints(rawBootstrapPeers);
 
-    console.log(`✅ Validated bootstrap peers: ${this.bootstrapPeers.join(", ")}`);
+    console.log(
+      `✅ Validated bootstrap peers: ${this.bootstrapPeers.join(", ")}`,
+    );
 
     // Set up known peers file path (will be updated after node initialization)
-    this.knownPeersFile = path.join(process.cwd(), "data/gossip-peers-temp.json");
+    this.knownPeersFile = path.join(
+      process.cwd(),
+      "data/gossip-peers-temp.json",
+    );
 
     // Gossip protocol configuration
     this.config = {
-      gossipInterval: parseInt(this.configService.get("GOSSIP_INTERVAL") || "5000", 10),
+      gossipInterval: parseInt(
+        this.configService.get("GOSSIP_INTERVAL") || "5000",
+        10,
+      ),
       fanout: parseInt(this.configService.get("GOSSIP_FANOUT") || "3", 10),
       maxTTL: parseInt(this.configService.get("GOSSIP_MAX_TTL") || "5", 10),
       heartbeatInterval: parseInt(
         this.configService.get("GOSSIP_HEARTBEAT_INTERVAL") || "10000",
-        10
+        10,
       ),
-      suspicionTimeout: parseInt(this.configService.get("GOSSIP_SUSPICION_TIMEOUT") || "30000", 10),
-      cleanupTimeout: parseInt(this.configService.get("GOSSIP_CLEANUP_TIMEOUT") || "60000", 10),
+      suspicionTimeout: parseInt(
+        this.configService.get("GOSSIP_SUSPICION_TIMEOUT") || "30000",
+        10,
+      ),
+      cleanupTimeout: parseInt(
+        this.configService.get("GOSSIP_CLEANUP_TIMEOUT") || "60000",
+        10,
+      ),
       maxMessageHistory: parseInt(
         this.configService.get("GOSSIP_MAX_MESSAGE_HISTORY") || "1000",
-        10
+        10,
       ),
     };
 
@@ -94,12 +109,14 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    console.log(`🗣️  Starting BLS Signer Gossip Service on port ${this.port}...`);
+    console.log(
+      `🗣️  Starting BLS Signer Gossip Service on port ${this.port}...`,
+    );
 
     // Wait a bit for the HTTP server to be set
     let retries = 0;
     while (!this.httpServer && retries < 50) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       retries++;
     }
 
@@ -111,7 +128,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     // Update known peers file path with actual node ID
     this.knownPeersFile = path.join(
       process.cwd(),
-      `data/gossip-peers-${this.nodeState.nodeId}.json`
+      `data/gossip-peers-${this.nodeState.nodeId}.json`,
     );
 
     // Load known peers from previous sessions
@@ -187,7 +204,8 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     });
 
     const gossipPublicUrl =
-      this.configService.get("GOSSIP_PUBLIC_URL") || `ws://localhost:${this.port}/ws`;
+      this.configService.get("GOSSIP_PUBLIC_URL") ||
+      `ws://localhost:${this.port}/ws`;
     console.log(`✅ Gossip Server listening on ${gossipPublicUrl}`);
   }
 
@@ -196,29 +214,36 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
    */
   private async connectToBootstrapPeers(): Promise<void> {
     if (this.bootstrapPeers.length === 0) {
-      console.log("⚠️  No gossip bootstrap peers configured, will rely on known peers");
+      console.log(
+        "⚠️  No gossip bootstrap peers configured, will rely on known peers",
+      );
       return;
     }
 
     const myGossipEndpoint =
-      this.configService.get("GOSSIP_PUBLIC_URL") || `ws://localhost:${this.port}/ws`;
-    const validBootstrapPeers = this.bootstrapPeers.filter(peer => peer !== myGossipEndpoint);
+      this.configService.get("GOSSIP_PUBLIC_URL") ||
+      `ws://localhost:${this.port}/ws`;
+    const validBootstrapPeers = this.bootstrapPeers.filter(
+      (peer) => peer !== myGossipEndpoint,
+    );
 
     if (validBootstrapPeers.length === 0) {
       console.log("⚠️  All gossip bootstrap peers are self-references");
       return;
     }
 
-    console.log(`🔗 Connecting to ${validBootstrapPeers.length} gossip bootstrap peers...`);
+    console.log(
+      `🔗 Connecting to ${validBootstrapPeers.length} gossip bootstrap peers...`,
+    );
     const results = await Promise.allSettled(
       validBootstrapPeers
-        .filter(peer => !this.connections.has(peer))
-        .map(peer => this.connectToPeer(peer))
+        .filter((peer) => !this.connections.has(peer))
+        .map((peer) => this.connectToPeer(peer)),
     );
 
-    const successCount = results.filter(r => r.status === "fulfilled").length;
+    const successCount = results.filter((r) => r.status === "fulfilled").length;
     console.log(
-      `✅ Successfully connected to ${successCount}/${validBootstrapPeers.length} bootstrap peers`
+      `✅ Successfully connected to ${successCount}/${validBootstrapPeers.length} bootstrap peers`,
     );
   }
 
@@ -231,7 +256,8 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     try {
       // Validate endpoint using whitelist mechanism
       // Currently allows all nodes, will check on-chain staking in the future
-      const validatedEndpoint = GossipWhitelistValidator.validateEndpoint(endpoint);
+      const validatedEndpoint =
+        GossipWhitelistValidator.validateEndpoint(endpoint);
       console.log(`🔗 Connecting to gossip peer: ${validatedEndpoint}`);
 
       const ws = new WebSocket(validatedEndpoint);
@@ -263,7 +289,8 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
         console.error(`    Error details:`, error);
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error(`❌ Failed to connect to ${endpoint}: ${errorMessage}`);
       if (error instanceof Error && error.stack) {
         console.error(`    Stack trace:`, error.stack);
@@ -295,7 +322,9 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
       this.cleanupMessageHistory();
     }
 
-    console.log(`📨 Received gossip message: ${message.type} from ${message.from}`);
+    console.log(
+      `📨 Received gossip message: ${message.type} from ${message.from}`,
+    );
 
     switch (message.type) {
       case "join":
@@ -353,8 +382,10 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     const existingPeer = this.peers.get(peerId);
 
     // Get endpoints from peer data or existing peer
-    const validatedApiEndpoint = peerData.apiEndpoint || existingPeer?.apiEndpoint;
-    let validatedGossipEndpoint = peerData.gossipEndpoint || existingPeer?.gossipEndpoint;
+    const validatedApiEndpoint =
+      peerData.apiEndpoint || existingPeer?.apiEndpoint;
+    let validatedGossipEndpoint =
+      peerData.gossipEndpoint || existingPeer?.gossipEndpoint;
 
     // Only validate gossip endpoint (WebSocket), not API endpoint (HTTP)
     try {
@@ -363,12 +394,16 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
 
       // Validate gossip endpoint using whitelist mechanism
       if (validatedGossipEndpoint) {
-        validatedGossipEndpoint =
-          GossipWhitelistValidator.validateEndpoint(validatedGossipEndpoint);
+        validatedGossipEndpoint = GossipWhitelistValidator.validateEndpoint(
+          validatedGossipEndpoint,
+        );
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`⚠️ Rejected peer ${peerId} due to invalid gossip endpoint: ${errorMessage}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(
+        `⚠️ Rejected peer ${peerId} due to invalid gossip endpoint: ${errorMessage}`,
+      );
       return; // Reject peer with invalid endpoints
     }
 
@@ -380,7 +415,8 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
       status: "active",
       lastSeen: new Date(),
       region: peerData.region || existingPeer?.region,
-      capabilities: peerData.capabilities || existingPeer?.capabilities || ["bls-signing"],
+      capabilities: peerData.capabilities ||
+        existingPeer?.capabilities || ["bls-signing"],
       version: peerData.version || existingPeer?.version,
       heartbeatCount: 0,
     };
@@ -393,7 +429,9 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
       this.connections.set(peer.gossipEndpoint, ws);
     }
 
-    console.log(`👋 Peer joined: ${peerId} (${peer.apiEndpoint}). Total peers: ${this.peers.size}`);
+    console.log(
+      `👋 Peer joined: ${peerId} (${peer.apiEndpoint}). Total peers: ${this.peers.size}`,
+    );
 
     // Send sync response with our current state only for new peers
     if (isNewPeer) {
@@ -408,8 +446,13 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
 
     // Connect to the new peer if we don't have a connection
     const myEndpoint =
-      this.configService.get("GOSSIP_PUBLIC_URL") || `ws://localhost:${this.port}/ws`;
-    if (isNewPeer && peer.gossipEndpoint && peer.gossipEndpoint !== myEndpoint) {
+      this.configService.get("GOSSIP_PUBLIC_URL") ||
+      `ws://localhost:${this.port}/ws`;
+    if (
+      isNewPeer &&
+      peer.gossipEndpoint &&
+      peer.gossipEndpoint !== myEndpoint
+    ) {
       setTimeout(() => this.connectToPeer(peer.gossipEndpoint!), 1000);
     }
 
@@ -456,11 +499,17 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     const currentVersion = currentData?.version || 0;
 
     if (version > currentVersion) {
-      this.nodeState.data.set(key, { value, version, timestamp: message.timestamp });
+      this.nodeState.data.set(key, {
+        value,
+        version,
+        timestamp: message.timestamp,
+      });
       this.nodeState.version++;
       this.nodeState.lastUpdated = new Date();
 
-      console.log(`📝 Updated gossip data: ${key} = ${JSON.stringify(value)} (v${version})`);
+      console.log(
+        `📝 Updated gossip data: ${key} = ${JSON.stringify(value)} (v${version})`,
+      );
     }
   }
 
@@ -471,7 +520,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     // Process incoming sync data and update our state
     const syncData = message.data;
     if (Array.isArray(syncData)) {
-      syncData.forEach(item => {
+      syncData.forEach((item) => {
         const { key, value, version, timestamp } = item;
         const currentData = this.nodeState.data.get(key);
         const currentVersion = currentData?.version || 0;
@@ -480,7 +529,9 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
           this.nodeState.data.set(key, { value, version, timestamp });
           this.nodeState.version++;
           this.nodeState.lastUpdated = new Date();
-          console.log(`🔄 Synced data: ${key} = ${JSON.stringify(value)} (v${version})`);
+          console.log(
+            `🔄 Synced data: ${key} = ${JSON.stringify(value)} (v${version})`,
+          );
         }
       });
     }
@@ -515,7 +566,10 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
       .filter(([_, ws]) => ws !== sender && ws.readyState === WebSocket.OPEN)
       .filter(([endpoint, _]) => !messageHistory.propagatedTo.has(endpoint));
 
-    const peersToGossip = this.selectRandomPeers(availablePeers, this.config.fanout);
+    const peersToGossip = this.selectRandomPeers(
+      availablePeers,
+      this.config.fanout,
+    );
 
     peersToGossip.forEach(([endpoint, ws]) => {
       this.sendMessage(ws, message);
@@ -544,12 +598,15 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
 
     // Select random peers for this gossip round
     const availableConnections = Array.from(this.connections.entries()).filter(
-      ([_, ws]) => ws.readyState === WebSocket.OPEN
+      ([_, ws]) => ws.readyState === WebSocket.OPEN,
     );
 
     if (availableConnections.length === 0) return;
 
-    const selectedPeers = this.selectRandomPeers(availableConnections, this.config.fanout);
+    const selectedPeers = this.selectRandomPeers(
+      availableConnections,
+      this.config.fanout,
+    );
 
     // Gossip some data to selected peers
     selectedPeers.forEach(([_, ws]) => {
@@ -635,9 +692,14 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     this.peers.forEach((peer, peerId) => {
       const timeSinceLastSeen = now - peer.lastSeen.getTime();
 
-      if (timeSinceLastSeen > this.config.suspicionTimeout && peer.status === "active") {
+      if (
+        timeSinceLastSeen > this.config.suspicionTimeout &&
+        peer.status === "active"
+      ) {
         peer.status = "suspected";
-        console.log(`⚠️  Peer suspected: ${peerId} (last seen ${timeSinceLastSeen}ms ago)`);
+        console.log(
+          `⚠️  Peer suspected: ${peerId} (last seen ${timeSinceLastSeen}ms ago)`,
+        );
       }
     });
 
@@ -664,12 +726,15 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     this.peers.forEach((peer, peerId) => {
       const timeSinceLastSeen = now - peer.lastSeen.getTime();
 
-      if (timeSinceLastSeen > this.config.cleanupTimeout && peer.status !== "active") {
+      if (
+        timeSinceLastSeen > this.config.cleanupTimeout &&
+        peer.status !== "active"
+      ) {
         peersToRemove.push(peerId);
       }
     });
 
-    peersToRemove.forEach(peerId => {
+    peersToRemove.forEach((peerId) => {
       const peer = this.peers.get(peerId);
       if (peer?.gossipEndpoint) {
         const ws = this.connections.get(peer.gossipEndpoint);
@@ -700,7 +765,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
-    oldMessages.forEach(messageId => {
+    oldMessages.forEach((messageId) => {
       this.messageHistory.delete(messageId);
     });
 
@@ -766,12 +831,14 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
    * Send sync message to a specific peer
    */
   private sendSyncMessage(ws: WebSocket): void {
-    const syncData = Array.from(this.nodeState.data.entries()).map(([key, data]) => ({
-      key,
-      value: data.value,
-      version: data.version,
-      timestamp: data.timestamp,
-    }));
+    const syncData = Array.from(this.nodeState.data.entries()).map(
+      ([key, data]) => ({
+        key,
+        value: data.value,
+        version: data.version,
+        timestamp: data.timestamp,
+      }),
+    );
 
     const syncMessage: GossipMessage = {
       type: "sync",
@@ -791,8 +858,8 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
    */
   private sendKnownPeersToNewPeer(ws: WebSocket, newPeerId: string): void {
     const knownPeers = Array.from(this.peers.values())
-      .filter(peer => peer.nodeId !== newPeerId && peer.status === "active")
-      .map(peer => ({
+      .filter((peer) => peer.nodeId !== newPeerId && peer.status === "active")
+      .map((peer) => ({
         id: peer.nodeId,
         publicKey: peer.publicKey,
         apiEndpoint: peer.apiEndpoint,
@@ -824,7 +891,10 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
   /**
    * Announce new peer to other existing peers
    */
-  private announceNewPeerToOthers(newPeer: PeerInfo, excludeWs: WebSocket): void {
+  private announceNewPeerToOthers(
+    newPeer: PeerInfo,
+    excludeWs: WebSocket,
+  ): void {
     const announcement: GossipMessage = {
       type: "join",
       from: this.getNodeId(),
@@ -847,7 +917,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     };
 
     // Send to all connected peers except the new one
-    this.connections.forEach(ws => {
+    this.connections.forEach((ws) => {
       if (ws !== excludeWs && ws.readyState === WebSocket.OPEN) {
         this.sendMessage(ws, announcement);
         this.stats.messagesSent++;
@@ -863,7 +933,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
   private handlePeerDiscoveryMessage(peers: any[]): void {
     console.log(`📋 Received ${peers.length} peer discoveries`);
 
-    peers.forEach(peerInfo => {
+    peers.forEach((peerInfo) => {
       if (peerInfo.id !== this.getNodeId() && !this.peers.has(peerInfo.id)) {
         const peer: PeerInfo = {
           nodeId: peerInfo.id,
@@ -879,11 +949,14 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
         };
 
         this.peers.set(peerInfo.id, peer);
-        console.log(`🔍 Discovered new peer: ${peerInfo.id} (${peerInfo.apiEndpoint})`);
+        console.log(
+          `🔍 Discovered new peer: ${peerInfo.id} (${peerInfo.apiEndpoint})`,
+        );
 
         // Try to connect to the discovered peer
         const myEndpoint =
-          this.configService.get("GOSSIP_PUBLIC_URL") || `ws://localhost:${this.port}/ws`;
+          this.configService.get("GOSSIP_PUBLIC_URL") ||
+          `ws://localhost:${this.port}/ws`;
         if (peer.gossipEndpoint && peer.gossipEndpoint !== myEndpoint) {
           setTimeout(() => this.connectToPeer(peer.gossipEndpoint!), 2000);
         }
@@ -912,11 +985,14 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
       };
 
       this.peers.set(peerInfo.id, peer);
-      console.log(`📢 Announced peer discovered: ${peerInfo.id} (${peerInfo.apiEndpoint})`);
+      console.log(
+        `📢 Announced peer discovered: ${peerInfo.id} (${peerInfo.apiEndpoint})`,
+      );
 
       // Try to connect to the announced peer
       const myEndpoint =
-        this.configService.get("GOSSIP_PUBLIC_URL") || `ws://localhost:${this.port}/ws`;
+        this.configService.get("GOSSIP_PUBLIC_URL") ||
+        `ws://localhost:${this.port}/ws`;
       if (peer.gossipEndpoint && peer.gossipEndpoint !== myEndpoint) {
         setTimeout(() => this.connectToPeer(peer.gossipEndpoint!), 2000);
       }
@@ -929,7 +1005,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
    * Broadcast message to all connected peers
    */
   private broadcastMessage(message: GossipMessage): void {
-    this.connections.forEach(ws => {
+    this.connections.forEach((ws) => {
       if (ws.readyState === WebSocket.OPEN) {
         this.sendMessage(ws, message);
         this.stats.messagesSent++;
@@ -949,7 +1025,10 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
   /**
    * Select random peers from available connections
    */
-  private selectRandomPeers(peers: [string, WebSocket][], count: number): [string, WebSocket][] {
+  private selectRandomPeers(
+    peers: [string, WebSocket][],
+    count: number,
+  ): [string, WebSocket][] {
     const shuffled = [...peers].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, Math.min(count, peers.length));
   }
@@ -971,10 +1050,10 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
   private updateStats(): void {
     this.stats.totalPeers = this.peers.size;
     this.stats.activePeers = Array.from(this.peers.values()).filter(
-      p => p.status === "active"
+      (p) => p.status === "active",
     ).length;
     this.stats.suspectedPeers = Array.from(this.peers.values()).filter(
-      p => p.status === "suspected"
+      (p) => p.status === "suspected",
     ).length;
   }
 
@@ -988,9 +1067,11 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
       if (nodeState && nodeState.nodeId) {
         return;
       }
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    console.warn("GossipService: waitForNodeReady timed out; proceeding with limited node info");
+    console.warn(
+      "GossipService: waitForNodeReady timed out; proceeding with limited node info",
+    );
   }
 
   /**
@@ -1055,15 +1136,22 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
    */
   private async attemptReconnections(): Promise<void> {
     const disconnectedPeers = Array.from(this.peers.values())
-      .filter(peer => peer.status !== "active" || !this.connections.has(peer.gossipEndpoint!))
-      .filter(peer => {
+      .filter(
+        (peer) =>
+          peer.status !== "active" ||
+          !this.connections.has(peer.gossipEndpoint!),
+      )
+      .filter((peer) => {
         const myEndpoint =
-          this.configService.get("GOSSIP_PUBLIC_URL") || `ws://localhost:${this.port}/ws`;
+          this.configService.get("GOSSIP_PUBLIC_URL") ||
+          `ws://localhost:${this.port}/ws`;
         return peer.gossipEndpoint && peer.gossipEndpoint !== myEndpoint;
       });
 
     if (disconnectedPeers.length > 0) {
-      console.log(`🔄 Attempting to reconnect to ${disconnectedPeers.length} peers...`);
+      console.log(
+        `🔄 Attempting to reconnect to ${disconnectedPeers.length} peers...`,
+      );
 
       for (const peer of disconnectedPeers) {
         if (peer.gossipEndpoint) {
@@ -1071,7 +1159,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
             await this.connectToPeer(peer.gossipEndpoint);
           } catch (error) {
             console.log(
-              `❌ Failed to reconnect to ${peer.nodeId}: ${error instanceof Error ? error.message : String(error)}`
+              `❌ Failed to reconnect to ${peer.nodeId}: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
         }
@@ -1080,7 +1168,9 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
 
     // If we have no active connections, try bootstrap peers again
     if (this.connections.size === 0) {
-      console.log("🆘 No active connections, attempting bootstrap reconnection...");
+      console.log(
+        "🆘 No active connections, attempting bootstrap reconnection...",
+      );
       await this.connectToBootstrapPeers();
       await this.connectToKnownPeers();
     }
@@ -1101,7 +1191,7 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
         const data = fs.readFileSync(this.knownPeersFile, "utf8");
         const knownPeers = JSON.parse(data) as PeerInfo[];
 
-        knownPeers.forEach(peer => {
+        knownPeers.forEach((peer) => {
           if (peer.nodeId !== this.getNodeId()) {
             // Mark as inactive initially, will be updated when we connect
             peer.status = "inactive";
@@ -1110,11 +1200,13 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
           }
         });
 
-        console.log(`📚 Loaded ${knownPeers.length} known peers from previous session`);
+        console.log(
+          `📚 Loaded ${knownPeers.length} known peers from previous session`,
+        );
       }
     } catch (error) {
       console.warn(
-        `⚠️  Failed to load known peers: ${error instanceof Error ? error.message : String(error)}`
+        `⚠️  Failed to load known peers: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -1125,8 +1217,8 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
   private async saveKnownPeers(): Promise<void> {
     try {
       const peersToSave = Array.from(this.peers.values())
-        .filter(peer => peer.status === "active")
-        .map(peer => ({
+        .filter((peer) => peer.status === "active")
+        .map((peer) => ({
           ...peer,
           lastSeen: peer.lastSeen.toISOString(), // Convert Date to string for JSON
         }));
@@ -1136,11 +1228,16 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
         fs.mkdirSync(dataDir, { recursive: true });
       }
 
-      fs.writeFileSync(this.knownPeersFile, JSON.stringify(peersToSave, null, 2));
-      console.log(`💾 Saved ${peersToSave.length} known peers for future sessions`);
+      fs.writeFileSync(
+        this.knownPeersFile,
+        JSON.stringify(peersToSave, null, 2),
+      );
+      console.log(
+        `💾 Saved ${peersToSave.length} known peers for future sessions`,
+      );
     } catch (error) {
       console.warn(
-        `⚠️  Failed to save known peers: ${error instanceof Error ? error.message : String(error)}`
+        `⚠️  Failed to save known peers: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -1150,17 +1247,22 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
    */
   private async connectToKnownPeers(): Promise<void> {
     const knownPeers = Array.from(this.peers.values())
-      .filter(peer => {
+      .filter((peer) => {
         const myEndpoint =
-          this.configService.get("GOSSIP_PUBLIC_URL") || `ws://localhost:${this.port}/ws`;
+          this.configService.get("GOSSIP_PUBLIC_URL") ||
+          `ws://localhost:${this.port}/ws`;
         return peer.gossipEndpoint && peer.gossipEndpoint !== myEndpoint;
       })
-      .filter(peer => !this.connections.has(peer.gossipEndpoint!));
+      .filter((peer) => !this.connections.has(peer.gossipEndpoint!));
 
     if (knownPeers.length > 0) {
-      console.log(`🔗 Connecting to ${knownPeers.length} known peers from previous sessions...`);
+      console.log(
+        `🔗 Connecting to ${knownPeers.length} known peers from previous sessions...`,
+      );
 
-      await Promise.allSettled(knownPeers.map(peer => this.connectToPeer(peer.gossipEndpoint!)));
+      await Promise.allSettled(
+        knownPeers.map((peer) => this.connectToPeer(peer.gossipEndpoint!)),
+      );
     }
   }
 
@@ -1182,9 +1284,11 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     return {
       nodeId: nodeId, // Changed from 'id' to 'nodeId' to match peer data structure
       publicKey: nodeState?.publicKey,
-      apiEndpoint: this.configService.get("PUBLIC_URL") || `http://localhost:${this.port}`,
+      apiEndpoint:
+        this.configService.get("PUBLIC_URL") || `http://localhost:${this.port}`,
       gossipEndpoint:
-        this.configService.get("GOSSIP_PUBLIC_URL") || `ws://localhost:${this.port}/ws`,
+        this.configService.get("GOSSIP_PUBLIC_URL") ||
+        `ws://localhost:${this.port}/ws`,
       region: "local",
       capabilities: ["bls-signing", "message-aggregation"],
       version: "1.0.0",
@@ -1198,7 +1302,9 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
    * Get all known peers
    */
   getPeers(): PeerInfo[] {
-    return Array.from(this.peers.values()).filter(peer => peer.status === "active");
+    return Array.from(this.peers.values()).filter(
+      (peer) => peer.status === "active",
+    );
   }
 
   /**
@@ -1239,7 +1345,9 @@ export class GossipService implements OnModuleInit, OnModuleDestroy {
     this.nodeState.version++;
     this.nodeState.lastUpdated = new Date();
 
-    console.log(`📝 Set gossip data: ${key} = ${JSON.stringify(value)} (v${version})`);
+    console.log(
+      `📝 Set gossip data: ${key} = ${JSON.stringify(value)} (v${version})`,
+    );
   }
 
   /**

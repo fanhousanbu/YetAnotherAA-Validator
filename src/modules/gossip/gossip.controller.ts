@@ -1,5 +1,11 @@
 import { Controller, Get, Post, Body, Param } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from "@nestjs/swagger";
 import { GossipService } from "./gossip.service.js";
 import { PeerInfo, GossipStats } from "./gossip.interfaces.js";
 
@@ -20,8 +26,13 @@ export class GossipController {
   constructor(private readonly gossipService: GossipService) {}
 
   @Get("peers")
-  @ApiOperation({ summary: "Get all nodes in the gossip network including self" })
-  @ApiResponse({ status: 200, description: "List of all active nodes including current node" })
+  @ApiOperation({
+    summary: "Get all nodes in the gossip network including self",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "List of all active nodes including current node",
+  })
   getPeers(): { success: boolean; peers: PeerInfo[] } {
     return {
       success: true,
@@ -55,9 +66,16 @@ export class GossipController {
   @Get("data/:key")
   @ApiOperation({ summary: "Get specific gossip data by key" })
   @ApiParam({ name: "key", description: "Data key" })
-  @ApiResponse({ status: 200, description: "Gossip data for the specified key" })
+  @ApiResponse({
+    status: 200,
+    description: "Gossip data for the specified key",
+  })
   @ApiResponse({ status: 404, description: "Key not found" })
-  getData(@Param("key") key: string): { success: boolean; data?: any; message?: string } {
+  getData(@Param("key") key: string): {
+    success: boolean;
+    data?: any;
+    message?: string;
+  } {
     const value = this.gossipService.getData(key);
 
     if (value !== undefined) {
@@ -90,7 +108,10 @@ export class GossipController {
   })
   @ApiResponse({ status: 200, description: "Data set successfully" })
   @ApiResponse({ status: 400, description: "Invalid request body" })
-  setData(@Body() setDataDto: SetDataDto): { success: boolean; message: string } {
+  setData(@Body() setDataDto: SetDataDto): {
+    success: boolean;
+    message: string;
+  } {
     try {
       const { key, value } = setDataDto;
 
@@ -117,7 +138,10 @@ export class GossipController {
 
   @Get("state")
   @ApiOperation({ summary: "Get current node state" })
-  @ApiResponse({ status: 200, description: "Current node state including version and data" })
+  @ApiResponse({
+    status: 200,
+    description: "Current node state including version and data",
+  })
   getNodeState(): { success: boolean; state: any } {
     const state = this.gossipService.getNodeState();
 
@@ -135,7 +159,10 @@ export class GossipController {
 
   @Get("health")
   @ApiOperation({ summary: "Get gossip service health status" })
-  @ApiResponse({ status: 200, description: "Health status of the gossip service" })
+  @ApiResponse({
+    status: 200,
+    description: "Health status of the gossip service",
+  })
   getHealth(): { success: boolean; health: any } {
     const stats = this.gossipService.getStats();
 

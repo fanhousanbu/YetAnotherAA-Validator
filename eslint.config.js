@@ -66,6 +66,12 @@ export default [
     },
   },
   {
-    ignores: [".eslintrc.js", "eslint.config.js", "dist/**", "node_modules/**", "build/**"],
+    ignores: [
+      ".eslintrc.js",
+      "eslint.config.js",
+      "dist/**",
+      "node_modules/**",
+      "build/**",
+    ],
   },
 ];

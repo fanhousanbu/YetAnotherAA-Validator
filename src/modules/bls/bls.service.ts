@@ -6,9 +6,14 @@ import { NodeKeyPair } from "../../interfaces/node.interface.js";
 
 @Injectable()
 export class BlsService {
-  async signMessage(message: string, node: NodeKeyPair): Promise<SignatureResult> {
+  async signMessage(
+    message: string,
+    node: NodeKeyPair,
+  ): Promise<SignatureResult> {
     const messageBytes = ethers.getBytes(message);
-    const messagePoint = await bls.G2.hashToCurve(messageBytes, { DST: BLS_DST });
+    const messagePoint = await bls.G2.hashToCurve(messageBytes, {
+      DST: BLS_DST,
+    });
 
     const privateKeyBytes = this.hexToBytes(node.privateKey.substring(2));
     const publicKey = sigs.getPublicKey(privateKeyBytes);
@@ -24,7 +29,10 @@ export class BlsService {
     };
   }
 
-  async aggregateSignatures(signatures: any[], publicKeys: any[]): Promise<any> {
+  async aggregateSignatures(
+    signatures: any[],
+    publicKeys: any[],
+  ): Promise<any> {
     const aggregatedSignature = sigs.aggregateSignatures(signatures);
     const aggregatedPubKey = sigs.aggregatePublicKeys(publicKeys);
     return { aggregatedSignature, aggregatedPubKey };
@@ -34,7 +42,11 @@ export class BlsService {
     return sigs.aggregateSignatures(signatures);
   }
 
-  async verifySignature(signature: any, messagePoint: any, publicKey: any): Promise<boolean> {
+  async verifySignature(
+    signature: any,
+    messagePoint: any,
+    publicKey: any,
+  ): Promise<boolean> {
     return await sigs.verify(signature, messagePoint, publicKey);
   }
 

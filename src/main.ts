@@ -14,7 +14,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    })
+    }),
   );
 
   app.enableCors();
@@ -22,7 +22,9 @@ async function bootstrap() {
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle("BLS Signer Service API")
-    .setDescription("API documentation for ERC4337 BLS signature aggregation service")
+    .setDescription(
+      "API documentation for ERC4337 BLS signature aggregation service",
+    )
     .setVersion("1.0")
     .addTag("signature", "Signature operations")
     .addTag("node", "Node management")
@@ -49,7 +51,9 @@ async function bootstrap() {
   console.log(`   GET /node/info - Get current node information`);
   console.log(`   POST /node/register - Register node on-chain`);
   console.log(`   POST /signature/sign - Sign message with this node`);
-  console.log(`   POST /signature/aggregate - Sign and return as aggregate format`);
+  console.log(
+    `   POST /signature/aggregate - Sign and return as aggregate format`,
+  );
   console.log(`   WS /ws - WebSocket gossip protocol endpoint`);
 }
 
