@@ -2,3 +2,6 @@ data/*
 
 # Node development config files
 node_dev_*.json
+
+# Dependencies
+node_modules/
