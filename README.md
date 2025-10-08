@@ -1,25 +1,75 @@
 # YetAnotherAA-Signer
 
-A production-ready BLS signature aggregation service for ERC-4337 account abstraction. This service provides distributed BLS12-381 signature generation with gossip network coordination for multi-node environments.
+A complete BLS signature infrastructure for ERC-4337 account abstraction, combining off-chain signature aggregation services with on-chain verification smart contracts.
 
 > **Note**: This package was extracted from the [YetAnotherAA](https://github.com/fanhousanbu/YetAnotherAA) monorepo to serve as a standalone microservice.
 
+## Components
+
+This repository contains two main components:
+
+1. **Signer Service** (`/` root directory) - Off-chain BLS signature aggregation microservice
+2. **Validator Contracts** (`/validator` directory) - On-chain smart contracts for signature verification
+
+Both components work together to provide a complete BLS-based signing infrastructure for ERC-4337 account abstraction.
+
 ## Features
 
-- **Individual Node Identity**: Each service instance runs as an independent
-  node with unique BLS key pairs
-- **BLS12-381 Signatures**: Generate BLS signatures compatible with
-  AAStarValidator contract
-- **On-chain Registration**: Real blockchain integration for node registration
-  using ethers.js
-- **RESTful API**: Clean REST endpoints for signature operations and node
-  management
+### Signer Service Features
+
+- **Individual Node Identity**: Each service instance runs as an independent node with unique BLS key pairs
+- **BLS12-381 Signatures**: Generate BLS signatures compatible with AAStarValidator contract
+- **On-chain Registration**: Real blockchain integration for node registration using ethers.js
+- **RESTful API**: Clean REST endpoints for signature operations and node management
 - **Gossip Network**: WebSocket-based P2P communication for node discovery
 - **Single Port Architecture**: HTTP API and WebSocket gossip on same port
 - **Development Ready**: Fixed development nodes for consistent debugging experience
 - **KMS Integration**: Support for secure key management in production environments
 
+### Validator Contract Features
+
+- **BLS Signature Verification**: On-chain verification using EIP-2537 precompiles
+- **Multi-version Support**: Compatible with EntryPoint v0.6, v0.7, and v0.8
+- **ERC-4337 Accounts**: Full smart contract wallet implementation
+- **Deterministic Deployment**: CREATE2-based account factories
+- **Gas Efficient**: Optimized signature verification (~450k gas for 3 signers)
+
 ## Architecture
+
+### Complete System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Client Application                        │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Signer Service (NestJS API)                     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
+│  │ Node 1   │  │ Node 2   │  │ Node 3   │  (Gossip Network)│
+│  └──────────┘  └──────────┘  └──────────┘                  │
+└────────────────────┬────────────────────────────────────────┘
+                     │ BLS Signatures
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                Blockchain (Smart Contracts)                  │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  AAStarValidator (BLS Verification)                │     │
+│  └────────────────────────────────────────────────────┘     │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  AAStarAccountFactory (CREATE2 Deployment)         │     │
+│  └────────────────────────────────────────────────────┘     │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  AAStarAccount (ERC-4337 Wallet)                   │     │
+│  └────────────────────────────────────────────────────┘     │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  EntryPoint (v0.6 / v0.7 / v0.8)                   │     │
+│  └────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Signer Service Architecture
 
 Each signer service instance is a stateful node with:
 
@@ -28,9 +78,38 @@ Each signer service instance is a stateful node with:
 - Independent blockchain registration capability
 - Self-contained signing operations
 
+### Contract Architecture
+
+- **AAStarValidator**: Manages node registration and signature verification
+- **AAStarAccountFactory**: Creates deterministic account addresses
+- **AAStarAccount**: ERC-4337 compliant smart contract wallet
+- **Multi-version Support**: Separate contracts for v0.6, v0.7, v0.8
+
 ## Quick Start
 
-### Environment Setup
+### Step 1: Deploy Smart Contracts
+
+First, deploy the validator contracts (required for signer service):
+
+```bash
+cd validator
+
+# Install Foundry dependencies
+forge install
+
+# Deploy validator contract to Sepolia
+forge script script/DeployAAStarV7.s.sol:DeployAAStarV7 \
+  --rpc-url https://sepolia.infura.io/v3/YOUR_INFURA_KEY \
+  --private-key YOUR_PRIVATE_KEY \
+  --broadcast \
+  --legacy
+
+# Note the deployed VALIDATOR_CONTRACT_ADDRESS
+```
+
+For detailed contract deployment instructions, see [validator/README.md](validator/README.md).
+
+### Step 2: Configure Signer Service
 
 Create a `.env` file based on `.env.example`:
 
@@ -53,9 +132,12 @@ KMS_ENABLED=false
 KMS_ENDPOINT=https://kms.aastar.io
 ```
 
-### Installation
+### Step 3: Start Signer Service
 
 ```bash
+# Return to root directory
+cd ..
+
 # Install dependencies
 npm install
 
@@ -165,19 +247,36 @@ The `/node/register` endpoint performs real blockchain transactions:
 }
 ```
 
-## File Structure
+## Repository Structure
 
 ```
-src/
-├── interfaces/          # TypeScript interfaces
-├── modules/
-│   ├── bls/            # BLS cryptography operations
-│   ├── blockchain/     # Ethereum contract interactions
-│   ├── gossip/         # WebSocket gossip network
-│   ├── node/           # Node identity and state management
-│   └── signature/      # Signature generation services
-├── utils/              # BLS utilities and helpers
-└── main.ts             # Application entry point
+YetAnotherAA-Signer/
+├── src/                           # Signer service source code
+│   ├── interfaces/                # TypeScript interfaces
+│   ├── modules/
+│   │   ├── bls/                  # BLS cryptography operations
+│   │   ├── blockchain/           # Ethereum contract interactions
+│   │   ├── gossip/               # WebSocket gossip network
+│   │   ├── node/                 # Node identity and state management
+│   │   └── signature/            # Signature generation services
+│   ├── utils/                    # BLS utilities and helpers
+│   └── main.ts                   # Application entry point
+├── validator/                     # Smart contract directory
+│   ├── src/                      # Solidity contracts
+│   │   ├── AAStarValidator.sol   # BLS signature verification
+│   │   ├── AAStarAccount*.sol    # ERC-4337 accounts (v0.6/v0.7/v0.8)
+│   │   └── AAStarAccountFactory*.sol  # Account factories
+│   ├── script/                   # Deployment scripts
+│   ├── test/                     # Contract tests
+│   ├── lib/                      # Foundry dependencies
+│   └── README.md                 # Contract documentation
+├── data/                         # Node data directory
+├── demo/                         # Demo tools
+├── package.json                  # NPM package configuration
+├── README.md                     # This file
+├── DEPLOYMENT.md                 # Deployment guide
+├── QUICKSTART.md                 # Quick start guide
+└── LICENSE                       # MIT License
 
 node_dev_*.json         # Development node state files (contain private keys)
 node_*.json             # Dynamic node files (ignored by git)
@@ -334,12 +433,21 @@ Compatible with AAStarValidator contract functions:
 
 ## Key Technologies
 
+### Signer Service
+
 - **Framework**: NestJS
 - **Cryptography**: BLS12-381 (@noble/curves), @noble/hashes
 - **Blockchain**: Ethers.js v6
 - **Network**: WebSocket (ws), Axios
 - **Validation**: class-validator, class-transformer
 - **API Docs**: Swagger/OpenAPI
+
+### Smart Contracts
+
+- **Development**: Foundry (Forge, Anvil, Cast)
+- **Language**: Solidity ^0.8.23
+- **Standards**: ERC-4337, EIP-2537
+- **Dependencies**: OpenZeppelin, account-abstraction
 
 ## Integration with YetAnotherAA
 

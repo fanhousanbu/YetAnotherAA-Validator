@@ -1,0 +1,38 @@
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": false,
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "endOfLine": "lf",
+  "arrowParens": "avoid",
+  "bracketSpacing": true,
+  "proseWrap": "preserve",
+  "plugins": ["prettier-plugin-solidity"],
+  "overrides": [
+    {
+      "files": "*.sol",
+      "options": {
+        "printWidth": 120,
+        "tabWidth": 4,
+        "singleQuote": false,
+        "bracketSpacing": true
+      }
+    },
+    {
+      "files": "*.md",
+      "options": {
+        "printWidth": 80,
+        "proseWrap": "always"
+      }
+    },
+    {
+      "files": ["*.json", "*.jsonc"],
+      "options": {
+        "printWidth": 80,
+        "tabWidth": 2
+      }
+    }
+  ]
+}

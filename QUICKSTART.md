@@ -1,6 +1,30 @@
 # 快速开始 / Quick Start
 
-## 一键推送到 GitHub
+> **注意**: 如果你的仓库已经推送到 GitHub，只是需要添加 validator 智能合约，请查看 [ADD_VALIDATOR.md](ADD_VALIDATOR.md)
+
+## 场景 1: 添加 Validator 到已有仓库（推荐）
+
+如果你已经推送了 signer 服务，现在想添加 validator 智能合约：
+
+```bash
+# 克隆你的仓库
+git clone https://github.com/fanhousanbu/YetAnotherAA-Signer.git
+cd YetAnotherAA-Signer
+
+# 使用自动化脚本
+bash /tmp/YetAnotherAA-Signer/update-with-validator.sh
+
+# 或手动复制
+cp -r /tmp/YetAnotherAA-Signer/validator ./
+cp /tmp/YetAnotherAA-Signer/.gitmodules ./
+git add .
+git commit -m "Add validator smart contracts with submodules"
+git push origin master
+```
+
+详细步骤请参考 [ADD_VALIDATOR.md](ADD_VALIDATOR.md)。
+
+## 场景 2: 全新推送到 GitHub
 
 如果你的文件在 `/tmp/YetAnotherAA-Signer`，执行以下命令：
 
@@ -12,8 +36,8 @@ git init
 git add .
 git commit -m "Initial commit: Extract signer from YetAnotherAA monorepo"
 git remote add origin https://github.com/fanhousanbu/YetAnotherAA-Signer.git
-git branch -M main
-git push -u origin main
+git branch -M master
+git push -u origin master
 ```
 
 ## 从主仓库导出（替代方法）
@@ -43,8 +67,8 @@ git init
 git add .
 git commit -m "Initial commit: Extract signer from YetAnotherAA monorepo"
 git remote add origin https://github.com/fanhousanbu/YetAnotherAA-Signer.git
-git branch -M main
-git push -u origin main
+git branch -M master
+git push -u origin master
 ```
 
 ## 本地测试

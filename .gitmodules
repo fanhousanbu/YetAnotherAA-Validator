@@ -1,0 +1,9 @@
+[submodule "validator/lib/forge-std"]
+	path = validator/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "validator/lib/openzeppelin-contracts"]
+	path = validator/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "validator/lib/account-abstraction"]
+	path = validator/lib/account-abstraction
+	url = https://github.com/eth-infinitism/account-abstraction
