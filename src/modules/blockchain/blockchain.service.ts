@@ -118,4 +118,121 @@ export class BlockchainService {
   getWalletAddress(): string | null {
     return this.wallet?.address || null;
   }
+
+  async revokeNodeOnChain(contractAddress: string, nodeId: string): Promise<string> {
+    if (!this.wallet) {
+      throw new Error("Blockchain not configured. Set ETH_PRIVATE_KEY environment variable.");
+    }
+
+    const abi = [
+      "function revokePublicKey(bytes32 nodeId) external",
+      "function isRegistered(bytes32 nodeId) external view returns (bool)",
+    ];
+
+    const contract = new ethers.Contract(contractAddress, abi, this.wallet);
+
+    try {
+      // Check if registered
+      const isRegistered = await contract.isRegistered(nodeId);
+      if (!isRegistered) {
+        this.logger.warn(`Node ${nodeId} is not registered on-chain`);
+        return "not_registered";
+      }
+
+      this.logger.log(`Revoking node ${nodeId} on contract ${contractAddress}`);
+
+      // Call revokePublicKey function
+      const tx = await contract.revokePublicKey(nodeId);
+      this.logger.log(`Transaction submitted: ${tx.hash}`);
+
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      this.logger.log(`Transaction confirmed in block: ${receipt.blockNumber}`);
+
+      return tx.hash;
+    } catch (error: any) {
+      this.logger.error(`Failed to revoke node on-chain: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async batchRegisterNodesOnChain(
+    contractAddress: string,
+    nodeIds: string[],
+    publicKeys: string[]
+  ): Promise<string> {
+    if (!this.wallet) {
+      throw new Error("Blockchain not configured. Set ETH_PRIVATE_KEY environment variable.");
+    }
+
+    if (nodeIds.length !== publicKeys.length) {
+      throw new Error("Node IDs and public keys array length mismatch");
+    }
+
+    const abi = [
+      "function batchRegisterPublicKeys(bytes32[] calldata nodeIds, bytes[] calldata publicKeys) external",
+    ];
+
+    const contract = new ethers.Contract(contractAddress, abi, this.wallet);
+
+    try {
+      this.logger.log(`Batch registering ${nodeIds.length} nodes on contract ${contractAddress}`);
+
+      const tx = await contract.batchRegisterPublicKeys(nodeIds, publicKeys);
+      this.logger.log(`Batch registration transaction submitted: ${tx.hash}`);
+
+      const receipt = await tx.wait();
+      this.logger.log(`Batch registration confirmed in block: ${receipt.blockNumber}`);
+
+      return tx.hash;
+    } catch (error: any) {
+      this.logger.error(`Failed to batch register nodes on-chain: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async getNodePublicKey(contractAddress: string, nodeId: string): Promise<string> {
+    if (!this.provider) {
+      throw new Error("Blockchain provider not configured");
+    }
+
+    const abi = ["function registeredKeys(bytes32 nodeId) external view returns (bytes memory)"];
+
+    const contract = new ethers.Contract(contractAddress, abi, this.provider);
+
+    try {
+      const publicKey = await contract.registeredKeys(nodeId);
+      return publicKey;
+    } catch (error: any) {
+      this.logger.error(`Failed to get node public key: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async getRegisteredNodes(
+    contractAddress: string,
+    offset: number,
+    limit: number
+  ): Promise<{ nodeIds: string[]; publicKeys: string[] }> {
+    if (!this.provider) {
+      throw new Error("Blockchain provider not configured");
+    }
+
+    const abi = [
+      "function getRegisteredNodes(uint256 offset, uint256 limit) external view returns (bytes32[] memory nodeIds, bytes[] memory publicKeys)",
+    ];
+
+    const contract = new ethers.Contract(contractAddress, abi, this.provider);
+
+    try {
+      const result = await contract.getRegisteredNodes(offset, limit);
+      return {
+        nodeIds: result.nodeIds,
+        publicKeys: result.publicKeys,
+      };
+    } catch (error: any) {
+      this.logger.error(`Failed to get registered nodes: ${error.message}`);
+      throw error;
+    }
+  }
 }
