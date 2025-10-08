@@ -271,11 +271,8 @@ YetAnotherAA-Signer/
 │   ├── lib/                      # Foundry dependencies
 │   └── README.md                 # Contract documentation
 ├── data/                         # Node data directory
-├── demo/                         # Demo tools
 ├── package.json                  # NPM package configuration
 ├── README.md                     # This file
-├── DEPLOYMENT.md                 # Deployment guide
-├── QUICKSTART.md                 # Quick start guide
 └── LICENSE                       # MIT License
 
 node_dev_*.json         # Development node state files (contain private keys)
@@ -413,7 +410,6 @@ Deploy at least 3 nodes for redundancy:
 - `npm run test` - Run tests
 - `npm run test:ci` - Run tests in CI mode
 - `npm run type-check` - TypeScript type checking
-- `npm run generate-eoa` - Generate EOA keys for development
 
 ### Demo Tool
 
