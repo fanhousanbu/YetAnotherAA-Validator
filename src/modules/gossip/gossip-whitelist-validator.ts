@@ -15,9 +15,7 @@ export class GossipWhitelistValidator {
    */
   private static isDevelopmentMode(): boolean {
     const nodeEnv = process.env.NODE_ENV?.toLowerCase();
-    return (
-      nodeEnv === "development" || nodeEnv === "dev" || nodeEnv === "local"
-    );
+    return nodeEnv === "development" || nodeEnv === "dev" || nodeEnv === "local";
   }
 
   /**
@@ -49,7 +47,7 @@ export class GossipWhitelistValidator {
     // Validate protocol
     if (!this.ALLOWED_PROTOCOLS.includes(url.protocol)) {
       throw new Error(
-        `Invalid protocol: ${url.protocol}. Allowed protocols: ${this.ALLOWED_PROTOCOLS.join(", ")}`,
+        `Invalid protocol: ${url.protocol}. Allowed protocols: ${this.ALLOWED_PROTOCOLS.join(", ")}`
       );
     }
 
@@ -57,15 +55,8 @@ export class GossipWhitelistValidator {
     const hostname = url.hostname.toLowerCase();
 
     // Development mode: Log localhost connections
-    if (
-      isDev &&
-      (hostname === "localhost" ||
-        hostname === "127.0.0.1" ||
-        hostname === "::1")
-    ) {
-      console.log(
-        `🔧 Development mode: Allowing localhost connection to ${hostname}`,
-      );
+    if (isDev && (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1")) {
+      console.log(`🔧 Development mode: Allowing localhost connection to ${hostname}`);
     }
 
     // TODO: Implement on-chain staking verification
@@ -84,7 +75,7 @@ export class GossipWhitelistValidator {
     // Current implementation: Allow all nodes (temporary)
     if (!isDev) {
       console.log(
-        `⚠️  Whitelist check passed (currently allowing all nodes - on-chain validation pending)`,
+        `⚠️  Whitelist check passed (currently allowing all nodes - on-chain validation pending)`
       );
     }
 
@@ -109,8 +100,7 @@ export class GossipWhitelistValidator {
         const validated = this.validateEndpoint(endpoint);
         validatedEndpoints.push(validated);
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         errors.push(`${endpoint}: ${errorMessage}`);
       }
     }
@@ -158,9 +148,7 @@ export class GossipWhitelistValidator {
    * @param address The Ethereum address to check
    * @returns Whether the address is whitelisted
    */
-  private static async checkOnChainWhitelist(
-    address: string,
-  ): Promise<boolean> {
+  private static async checkOnChainWhitelist(address: string): Promise<boolean> {
     // Implementation will:
     // 1. Connect to the whitelist contract
     // 2. Check if the address is in the whitelist

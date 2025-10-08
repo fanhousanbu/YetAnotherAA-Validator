@@ -1,11 +1,5 @@
 import { Controller, Get, Post, Body, Param } from "@nestjs/common";
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBody,
-} from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from "@nestjs/swagger";
 import { GossipService } from "./gossip.service.js";
 import { PeerInfo, GossipStats } from "./gossip.interfaces.js";
 

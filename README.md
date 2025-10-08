@@ -1,34 +1,48 @@
 # YetAnotherAA-Validator
 
-A complete BLS signature infrastructure for ERC-4337 account abstraction, combining off-chain signature aggregation services with on-chain verification smart contracts.
+A complete BLS signature infrastructure for ERC-4337 account abstraction,
+combining off-chain signature aggregation services with on-chain verification
+smart contracts.
 
-> **Note**: This package was extracted from the [YetAnotherAA](https://github.com/fanhousanbu/YetAnotherAA) monorepo to serve as a standalone microservice.
+> **Note**: This package was extracted from the
+> [YetAnotherAA](https://github.com/fanhousanbu/YetAnotherAA) monorepo to serve
+> as a standalone microservice.
 
 ## Components
 
 This repository contains two main components:
 
-1. **Signer Service** (`/` root directory) - Off-chain BLS signature aggregation microservice
-2. **Validator Contracts** (`/contracts` directory) - On-chain smart contracts for signature verification
+1. **Signer Service** (`/` root directory) - Off-chain BLS signature aggregation
+   microservice
+2. **Validator Contracts** (`/contracts` directory) - On-chain smart contracts
+   for signature verification
 
-Both components work together to provide a complete BLS-based signing infrastructure for ERC-4337 account abstraction.
+Both components work together to provide a complete BLS-based signing
+infrastructure for ERC-4337 account abstraction.
 
 ## Features
 
 ### Signer Service Features
 
-- **Individual Node Identity**: Each service instance runs as an independent node with unique BLS key pairs
-- **BLS12-381 Signatures**: Generate BLS signatures compatible with AAStarValidator contract
-- **On-chain Registration**: Real blockchain integration for node registration using ethers.js
-- **RESTful API**: Clean REST endpoints for signature operations and node management
+- **Individual Node Identity**: Each service instance runs as an independent
+  node with unique BLS key pairs
+- **BLS12-381 Signatures**: Generate BLS signatures compatible with
+  AAStarValidator contract
+- **On-chain Registration**: Real blockchain integration for node registration
+  using ethers.js
+- **RESTful API**: Clean REST endpoints for signature operations and node
+  management
 - **Gossip Network**: WebSocket-based P2P communication for node discovery
 - **Single Port Architecture**: HTTP API and WebSocket gossip on same port
-- **Development Ready**: Fixed development nodes for consistent debugging experience
-- **KMS Integration**: Support for secure key management in production environments
+- **Development Ready**: Fixed development nodes for consistent debugging
+  experience
+- **KMS Integration**: Support for secure key management in production
+  environments
 
 ### Validator Contract Features
 
-- **BLS Signature Verification**: On-chain verification using EIP-2537 precompiles
+- **BLS Signature Verification**: On-chain verification using EIP-2537
+  precompiles
 - **Multi-version Support**: Compatible with EntryPoint v0.6, v0.7, and v0.8
 - **ERC-4337 Accounts**: Full smart contract wallet implementation
 - **Deterministic Deployment**: CREATE2-based account factories
@@ -107,7 +121,8 @@ forge script script/DeployAAStarV7.s.sol:DeployAAStarV7 \
 # Note the deployed VALIDATOR_CONTRACT_ADDRESS
 ```
 
-For detailed contract deployment instructions, see [contracts/README.md](contracts/README.md).
+For detailed contract deployment instructions, see
+[contracts/README.md](contracts/README.md).
 
 ### Step 2: Configure Signer Service
 
@@ -282,7 +297,8 @@ node_*.json             # Dynamic node files (ignored by git)
 
 - Private keys are never exposed in API responses
 - Node state files contain sensitive keys and should be protected
-- **IMPORTANT**: All `node_*.json` files contain private keys and are excluded from git
+- **IMPORTANT**: All `node_*.json` files contain private keys and are excluded
+  from git
 - Development node files should be regenerated for your environment
 - Production deployments should use KMS for key management
 
@@ -452,7 +468,8 @@ This signer service is designed to work with:
 - **AAStarAccountFactory**: ERC-4337 account factory
 - **EntryPoint v0.6/v0.7/v0.8**: ERC-4337 entry points
 
-For the complete account abstraction stack, see the main [YetAnotherAA](https://github.com/fanhousanbu/YetAnotherAA) repository.
+For the complete account abstraction stack, see the main
+[YetAnotherAA](https://github.com/fanhousanbu/YetAnotherAA) repository.
 
 ## License
 
