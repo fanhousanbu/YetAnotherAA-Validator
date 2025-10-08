@@ -55,7 +55,7 @@ Factory contracts for deterministic account deployment:
 ## Project Structure
 
 ```
-validator/
+contracts/
 ├── src/
 │   ├── AAStarValidator.sol              # BLS validator contract
 │   ├── AAStarAccountBase.sol            # Base account implementation
@@ -86,7 +86,7 @@ validator/
 ## Installation
 
 ```bash
-cd validator
+cd contracts
 
 # Install Foundry dependencies
 forge install
@@ -115,7 +115,7 @@ forge test -vvv
 
 ### Environment Setup
 
-Create a `.env` file in the validator directory:
+Create a `.env` file in the contracts directory:
 
 ```bash
 # Network RPC
@@ -363,5 +363,5 @@ Contributions are welcome! Please ensure:
 
 For issues and questions:
 
-- GitHub Issues: https://github.com/fanhousanbu/YetAnotherAA-Signer/issues
+- GitHub Issues: https://github.com/fanhousanbu/YetAnotherAA-Validator/issues
 - Main Project: https://github.com/fanhousanbu/YetAnotherAA

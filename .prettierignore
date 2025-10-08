@@ -1,6 +1,6 @@
 # Git submodules
-validator/lib/
+contracts/lib/
 
-validator/out/
+contracts/out/
 
-validator/cache/
+contracts/cache/

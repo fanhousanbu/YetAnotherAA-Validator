@@ -1,4 +1,4 @@
-# YetAnotherAA-Signer
+# YetAnotherAA-Validator
 
 A complete BLS signature infrastructure for ERC-4337 account abstraction, combining off-chain signature aggregation services with on-chain verification smart contracts.
 
@@ -9,7 +9,7 @@ A complete BLS signature infrastructure for ERC-4337 account abstraction, combin
 This repository contains two main components:
 
 1. **Signer Service** (`/` root directory) - Off-chain BLS signature aggregation microservice
-2. **Validator Contracts** (`/validator` directory) - On-chain smart contracts for signature verification
+2. **Validator Contracts** (`/contracts` directory) - On-chain smart contracts for signature verification
 
 Both components work together to provide a complete BLS-based signing infrastructure for ERC-4337 account abstraction.
 
@@ -92,7 +92,7 @@ Each signer service instance is a stateful node with:
 First, deploy the validator contracts (required for signer service):
 
 ```bash
-cd validator
+cd contracts
 
 # Install Foundry dependencies
 forge install
@@ -107,7 +107,7 @@ forge script script/DeployAAStarV7.s.sol:DeployAAStarV7 \
 # Note the deployed VALIDATOR_CONTRACT_ADDRESS
 ```
 
-For detailed contract deployment instructions, see [validator/README.md](validator/README.md).
+For detailed contract deployment instructions, see [contracts/README.md](contracts/README.md).
 
 ### Step 2: Configure Signer Service
 
@@ -249,7 +249,7 @@ The `/node/register` endpoint performs real blockchain transactions:
 ## Repository Structure
 
 ```
-YetAnotherAA-Signer/
+YetAnotherAA-Validator/
 ├── src/                           # Signer service source code
 │   ├── interfaces/                # TypeScript interfaces
 │   ├── modules/
@@ -260,7 +260,7 @@ YetAnotherAA-Signer/
 │   │   └── signature/            # Signature generation services
 │   ├── utils/                    # BLS utilities and helpers
 │   └── main.ts                   # Application entry point
-├── validator/                     # Smart contract directory
+├── contracts/                     # Smart contract directory
 │   ├── src/                      # Solidity contracts
 │   │   ├── AAStarValidator.sol   # BLS signature verification
 │   │   ├── AAStarAccount*.sol    # ERC-4337 accounts (v0.6/v0.7/v0.8)
@@ -466,5 +466,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 For issues and questions:
 
-- GitHub Issues: https://github.com/fanhousanbu/YetAnotherAA-Signer/issues
+- GitHub Issues: https://github.com/fanhousanbu/YetAnotherAA-Validator/issues
 - Main Project: https://github.com/fanhousanbu/YetAnotherAA

@@ -1,16 +1,16 @@
 {
-  "name": "yetanotheraa-signer",
+  "name": "yetanotheraa-validator",
   "version": "1.0.0",
-  "description": "Production-ready BLS signature aggregation service for ERC-4337 account abstraction",
+  "description": "Production-ready BLS signature validation infrastructure for ERC-4337 account abstraction",
   "main": "dist/main.js",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fanhousanbu/YetAnotherAA-Signer.git"
+    "url": "https://github.com/fanhousanbu/YetAnotherAA-Validator.git"
   },
-  "homepage": "https://github.com/fanhousanbu/YetAnotherAA-Signer#readme",
+  "homepage": "https://github.com/fanhousanbu/YetAnotherAA-Validator#readme",
   "bugs": {
-    "url": "https://github.com/fanhousanbu/YetAnotherAA-Signer/issues"
+    "url": "https://github.com/fanhousanbu/YetAnotherAA-Validator/issues"
   },
   "scripts": {
     "build": "nest build",

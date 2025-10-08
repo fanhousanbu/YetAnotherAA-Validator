@@ -16,9 +16,9 @@ export default {
   testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
   testPathIgnorePatterns: [
     "/node_modules/",
-    "/validator/lib/",
-    "/validator/out/",
-    "/validator/cache/",
+    "/contracts/lib/",
+    "/contracts/out/",
+    "/contracts/cache/",
   ],
   collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts", "!src/main.ts"],
   coverageDirectory: "coverage",
