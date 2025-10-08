@@ -26,6 +26,7 @@ async function bootstrap() {
     .setVersion("1.0")
     .addTag("signature", "Signature operations")
     .addTag("node", "Node management")
+    .addTag("admin", "Admin panel for node management")
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, document);
@@ -44,12 +45,14 @@ async function bootstrap() {
 
   console.log(`🚀 BLS Signer Service is running on ${host}:${port}`);
   console.log(`📖 Swagger API documentation: ${publicUrl}/api`);
+  console.log(`🔐 Admin Panel: ${publicUrl}/admin`);
   console.log(`🌐 WebSocket Gossip endpoint: ws://${host}:${port}/ws`);
   console.log(`📋 Available endpoints:`);
   console.log(`   GET /node/info - Get current node information`);
   console.log(`   POST /node/register - Register node on-chain`);
   console.log(`   POST /signature/sign - Sign message with this node`);
   console.log(`   POST /signature/aggregate - Sign and return as aggregate format`);
+  console.log(`   GET /admin - Node management admin panel`);
   console.log(`   WS /ws - WebSocket gossip protocol endpoint`);
 }
 

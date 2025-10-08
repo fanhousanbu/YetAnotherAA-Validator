@@ -4,6 +4,7 @@ import { NodeModule } from "./modules/node/node.module.js";
 import { SignatureModule } from "./modules/signature/signature.module.js";
 import { BlockchainModule } from "./modules/blockchain/blockchain.module.js";
 import { GossipModule } from "./modules/gossip/gossip.module.js";
+import { AdminModule } from "./modules/admin/admin.module.js";
 import { AppConfigModule } from "./config/config.module.js";
 
 @Module({
@@ -14,6 +15,7 @@ import { AppConfigModule } from "./config/config.module.js";
     SignatureModule,
     BlockchainModule,
     GossipModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
