@@ -7,6 +7,9 @@ data/*
 node_dev_*.json
 !node_dev_001.json
 
+# Node state files (contains private keys)
+node_state.json
+
 # Dependencies
 node_modules/
 
