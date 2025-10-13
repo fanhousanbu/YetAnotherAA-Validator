@@ -10,7 +10,7 @@ import { randomBytes, createHash } from "crypto";
 @Injectable()
 export class NodeService implements OnModuleInit {
   private readonly logger = new Logger(NodeService.name);
-  private nodeState: NodeState;
+  private nodeState: NodeState | null;
   private nodeStateFilePath: string;
   private contractAddress: string;
 
@@ -28,79 +28,23 @@ export class NodeService implements OnModuleInit {
   private async initializeNode(): Promise<void> {
     this.loadContractAddress();
 
-    const nodeId = this.configService.get<string>("nodeId");
-    const nodeStateFile = this.configService.get<string>("nodeStateFile");
+    // Use fixed file name: node_state.json
+    this.nodeStateFilePath = join(process.cwd(), "node_state.json");
 
-    if (nodeId) {
-      await this.initializeWithSpecificNodeId(nodeId);
-    } else if (nodeStateFile) {
-      await this.initializeWithStateFile(nodeStateFile);
+    if (existsSync(this.nodeStateFilePath)) {
+      this.loadExistingNodeState();
+      if (this.nodeState) {
+        this.logger.log(`Loaded node state: ${this.nodeState.nodeId}`);
+      }
     } else {
-      await this.initializeWithAutoDiscovery();
+      this.logger.log("No node state file found. Node is not created yet.");
+      this.nodeState = null;
     }
   }
 
   private loadContractAddress(): void {
     this.contractAddress = this.configService.get<string>("validatorContractAddress")!;
     this.logger.log(`Using contract address from environment: ${this.contractAddress}`);
-  }
-
-  private async initializeWithSpecificNodeId(nodeId: string): Promise<void> {
-    this.nodeStateFilePath = join(process.cwd(), `node_${nodeId}.json`);
-
-    if (existsSync(this.nodeStateFilePath)) {
-      this.loadExistingNodeState();
-      this.logger.log(`Loaded existing node state for ${this.nodeState.nodeId}`);
-    } else {
-      await this.createNewNodeState(nodeId);
-      this.logger.log(`Created new node state for ${this.nodeState.nodeId}`);
-    }
-  }
-
-  private async initializeWithStateFile(stateFilePath: string): Promise<void> {
-    this.nodeStateFilePath = stateFilePath;
-
-    if (existsSync(this.nodeStateFilePath)) {
-      this.loadExistingNodeState();
-      this.logger.log(`Loaded node state from file: ${stateFilePath}`);
-    } else {
-      throw new Error(`Node state file not found: ${stateFilePath}`);
-    }
-  }
-
-  private async initializeWithAutoDiscovery(): Promise<void> {
-    const existingNodeFiles = this.discoverExistingNodeFiles();
-
-    if (existingNodeFiles.length === 0) {
-      const newNodeId = this.generateNodeId();
-      this.nodeStateFilePath = join(process.cwd(), `node_${newNodeId}.json`);
-      await this.createNewNodeState(newNodeId);
-      this.logger.log(`No existing nodes found. Created new node: ${newNodeId}`);
-    } else if (existingNodeFiles.length === 1) {
-      this.nodeStateFilePath = existingNodeFiles[0];
-      this.loadExistingNodeState();
-      this.logger.log(`Auto-discovered and loaded node: ${this.nodeState.nodeId}`);
-    } else {
-      this.logger.error(`Multiple node files found: ${existingNodeFiles.join(", ")}`);
-      this.logger.error("Please specify NODE_ID or NODE_STATE_FILE environment variable");
-      throw new Error("Ambiguous node selection: multiple node state files found");
-    }
-  }
-
-  private discoverExistingNodeFiles(): string[] {
-    try {
-      const files = readdirSync(process.cwd());
-      return files
-        .filter(file => file.startsWith("node_") && file.endsWith(".json"))
-        .map(file => join(process.cwd(), file));
-    } catch (error) {
-      this.logger.warn(`Error reading directory: ${error}`);
-      return [];
-    }
-  }
-
-  private generateNodeId(): string {
-    return "0x" + randomBytes(16).toString("hex");
   }
 
   private loadExistingNodeState(): void {
@@ -112,26 +56,7 @@ export class NodeService implements OnModuleInit {
     }
   }
 
-  private async createNewNodeState(nodeId: string): Promise<void> {
-    const privateKeyBytes = randomBytes(32);
-    const privateKey = "0x" + privateKeyBytes.toString("hex");
-    const publicKey = await this.blsService.getPublicKeyFromPrivateKey(privateKey);
-
-    this.nodeState = {
-      nodeId,
-      nodeName: `node_${nodeId.substring(2, 8)}`,
-      privateKey,
-      publicKey,
-      registrationStatus: "pending",
-      contractAddress: this.contractAddress,
-      createdAt: new Date().toISOString(),
-      description: `Autonomous node ${nodeId}`,
-    };
-
-    this.saveNodeState();
-  }
-
-  private saveNodeState(): void {
+  saveNodeState(): void {
     try {
       writeFileSync(this.nodeStateFilePath, JSON.stringify(this.nodeState, null, 2), "utf8");
     } catch (error: any) {
@@ -163,6 +88,10 @@ export class NodeService implements OnModuleInit {
     txHash?: string;
     message: string;
   }> {
+    if (!this.nodeState) {
+      throw new Error("No node state loaded. Create a node first.");
+    }
+
     if (!this.blockchainService.isConfigured()) {
       throw new Error(
         "Blockchain service not configured. Set ETH_PRIVATE_KEY and ETH_RPC_URL environment variables."
@@ -244,6 +173,9 @@ export class NodeService implements OnModuleInit {
   }
 
   updateRegistrationStatus(status: "pending" | "registered" | "failed"): void {
+    if (!this.nodeState) {
+      throw new Error("No node state loaded. Create a node first.");
+    }
     this.nodeState.registrationStatus = status;
     this.saveNodeState();
   }
@@ -254,5 +186,18 @@ export class NodeService implements OnModuleInit {
 
   getNodeState(): NodeState | null {
     return this.nodeState || null;
+  }
+
+  /**
+   * Reload node state from file (useful after create/delete operations)
+   */
+  reloadNodeState(): void {
+    if (existsSync(this.nodeStateFilePath)) {
+      this.loadExistingNodeState();
+      this.logger.log(`Reloaded node state: ${this.nodeState?.nodeId || "unknown"}`);
+    } else {
+      this.nodeState = null;
+      this.logger.log("Node state file not found, cleared internal state");
+    }
   }
 }

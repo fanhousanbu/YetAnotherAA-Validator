@@ -456,14 +456,20 @@ contract AAStarValidator {
 
     /**
      * @dev Register public key for new node
+     * Anyone can register, but in the future must verify PNT token staking
      *
      * @param nodeId Unique node identifier
      * @param publicKey G1 public key (128 bytes)
      */
-    function registerPublicKey(bytes32 nodeId, bytes calldata publicKey) external onlyOwner {
+    function registerPublicKey(bytes32 nodeId, bytes calldata publicKey) external {
         require(nodeId != bytes32(0), "Invalid node ID");
         require(publicKey.length == G1_POINT_LENGTH, "Invalid public key length");
         require(!isRegistered[nodeId], "Node already registered");
+
+        // TODO: Verify that msg.sender has staked PNT tokens before allowing registration
+        // Example implementation:
+        // IPNTToken pntToken = IPNTToken(pntTokenAddress);
+        // require(pntToken.getStakedAmount(msg.sender) >= minimumStakeAmount, "Insufficient PNT stake");
 
         registeredKeys[nodeId] = publicKey;
         isRegistered[nodeId] = true;

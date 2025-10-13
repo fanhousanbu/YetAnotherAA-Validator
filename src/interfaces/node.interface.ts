@@ -13,8 +13,10 @@ export interface NodeState {
   privateKey: string;
   publicKey: string;
   registrationStatus: "pending" | "registered" | "failed";
+  stakeStatus?: "not_staked" | "staked" | "unstaking";
+  stakeAmount?: string;
+  stakedAt?: string;
   registeredAt?: string;
-  contractAddress?: string;
   createdAt: string;
   description: string;
 }

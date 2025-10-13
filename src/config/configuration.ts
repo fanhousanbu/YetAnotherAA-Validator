@@ -16,12 +16,7 @@ export default () => {
   console.log(`   - Validator Contract: ${process.env.VALIDATOR_CONTRACT_ADDRESS}`);
   console.log(`   - ETH RPC URL: ${process.env.ETH_RPC_URL}`);
   console.log(`   - Port: ${port}`);
-  if (process.env.NODE_ID) {
-    console.log(`   - Node ID: ${process.env.NODE_ID}`);
-  }
-  if (process.env.NODE_STATE_FILE) {
-    console.log(`   - Node State File: ${process.env.NODE_STATE_FILE}`);
-  }
+  console.log(`   - Node State File: node_state.json (fixed)`);
 
   return {
     // Server
@@ -33,10 +28,6 @@ export default () => {
     ethRpcUrl: process.env.ETH_RPC_URL,
     ethPrivateKey: process.env.ETH_PRIVATE_KEY,
     validatorContractAddress: process.env.VALIDATOR_CONTRACT_ADDRESS,
-
-    // Node Configuration
-    nodeId: process.env.NODE_ID,
-    nodeStateFile: process.env.NODE_STATE_FILE,
 
     // Gossip Network
     gossipPublicUrl: process.env.GOSSIP_PUBLIC_URL || `ws://localhost:${port}/ws`,
