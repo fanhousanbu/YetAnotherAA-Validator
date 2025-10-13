@@ -78,7 +78,6 @@ export class NodeService implements OnModuleInit {
       nodeName: currentNode.nodeName,
       privateKey: currentNode.privateKey,
       publicKey: currentNode.publicKey,
-      registrationStatus: currentNode.registrationStatus,
       description: currentNode.description,
     };
   }
@@ -106,7 +105,6 @@ export class NodeService implements OnModuleInit {
       );
 
       if (isRegistered) {
-        this.nodeState.registrationStatus = "registered";
         this.nodeState.registeredAt = new Date().toISOString();
         this.saveNodeState();
 
@@ -137,7 +135,6 @@ export class NodeService implements OnModuleInit {
       );
 
       if (txHash === "already_registered") {
-        this.nodeState.registrationStatus = "registered";
         this.nodeState.registeredAt = new Date().toISOString();
         this.saveNodeState();
 
@@ -147,8 +144,7 @@ export class NodeService implements OnModuleInit {
         };
       }
 
-      // Update local state
-      this.nodeState.registrationStatus = "registered";
+      // Update local state with registration time
       this.nodeState.registeredAt = new Date().toISOString();
       this.saveNodeState();
 
@@ -162,22 +158,11 @@ export class NodeService implements OnModuleInit {
     } catch (error: any) {
       this.logger.error(`Failed to register node on-chain: ${error.message}`);
 
-      this.nodeState.registrationStatus = "failed";
-      this.saveNodeState();
-
       return {
         success: false,
         message: `Registration failed: ${error.message}`,
       };
     }
-  }
-
-  updateRegistrationStatus(status: "pending" | "registered" | "failed"): void {
-    if (!this.nodeState) {
-      throw new Error("No node state loaded. Create a node first.");
-    }
-    this.nodeState.registrationStatus = status;
-    this.saveNodeState();
   }
 
   getContractAddress(): string {

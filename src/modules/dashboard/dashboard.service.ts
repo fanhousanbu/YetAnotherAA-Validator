@@ -18,7 +18,6 @@ export interface NodeInfo {
     nodeName?: string;
     description?: string;
     createdAt?: string;
-    registrationStatus?: "pending" | "registered" | "failed";
     registeredAt?: string;
     stakeStatus?: "not_staked" | "staked" | "unstaking";
     stakeAmount?: string;
@@ -72,7 +71,6 @@ export class DashboardService {
           nodeName: nodeState.nodeName,
           description: nodeState.description,
           createdAt: nodeState.createdAt,
-          registrationStatus: nodeState.registrationStatus,
           registeredAt: nodeState.registeredAt,
           stakeStatus: nodeState.stakeStatus || "not_staked",
           stakeAmount: nodeState.stakeAmount,
@@ -119,7 +117,6 @@ export class DashboardService {
       nodeName,
       privateKey,
       publicKey,
-      registrationStatus: "pending",
       createdAt: new Date().toISOString(),
       description,
     };
@@ -141,7 +138,6 @@ export class DashboardService {
         nodeName,
         description,
         createdAt: nodeState.createdAt,
-        registrationStatus: "pending",
       },
     };
   }
@@ -185,7 +181,6 @@ export class DashboardService {
                   nodeName: localNode.nodeName,
                   description: localNode.description,
                   createdAt: localNode.createdAt,
-                  registrationStatus: localNode.registrationStatus,
                   registeredAt: localNode.registeredAt,
                 }
               : undefined,
@@ -207,17 +202,20 @@ export class DashboardService {
       throw new Error("No node exists to delete");
     }
 
-    // Fast check: if local status shows registered, deny immediately
-    // No need to check chain - registered nodes cannot be deleted
-    if (currentNode.registrationStatus === "registered") {
+    // Check on-chain registration status - this is the single source of truth
+    const isRegistered = await this.blockchainService.checkNodeRegistration(
+      this.contractAddress,
+      currentNode.nodeId
+    );
+
+    if (isRegistered) {
       return {
         success: false,
         message: "Cannot delete: Node is registered on-chain. Revoke it first.",
       };
     }
 
-    // For pending/failed nodes, they are definitely not on-chain, proceed with deletion
-
+    // Node is not registered on-chain, safe to delete
     // Delete the node_state.json file
     try {
       const fs = await import("fs");

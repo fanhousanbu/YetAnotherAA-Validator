@@ -3,7 +3,6 @@ export interface NodeKeyPair {
   nodeName: string;
   privateKey: string;
   publicKey: string;
-  registrationStatus: string;
   description: string;
 }
 
@@ -12,7 +11,6 @@ export interface NodeState {
   nodeName: string;
   privateKey: string;
   publicKey: string;
-  registrationStatus: "pending" | "registered" | "failed";
   stakeStatus?: "not_staked" | "staked" | "unstaking";
   stakeAmount?: string;
   stakedAt?: string;

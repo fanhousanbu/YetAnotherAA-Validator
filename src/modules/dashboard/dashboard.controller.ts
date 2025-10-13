@@ -499,8 +499,8 @@ export class DashboardController {
           </div>
           <div>
             <p style="margin-bottom: 8px;"><strong>Registration Status:</strong></p>
-            <span class="status-badge ${currentNode.isRegistered ? "status-registered" : currentNode.metadata?.registrationStatus === "failed" ? "status-failed" : "status-pending"}">
-              ${currentNode.isRegistered ? "✓ Registered On-Chain" : currentNode.metadata?.registrationStatus === "failed" ? "✗ Failed" : "⏳ Not Registered"}
+            <span class="status-badge ${currentNode.isRegistered ? "status-registered" : "status-pending"}">
+              ${currentNode.isRegistered ? "✓ Registered On-Chain" : "⏳ Not Registered"}
             </span>
           </div>
           <div>
