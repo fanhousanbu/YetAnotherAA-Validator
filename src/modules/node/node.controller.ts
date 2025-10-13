@@ -24,10 +24,6 @@ export class NodeController {
           type: "string",
           description: "Always hidden for security",
         },
-        registrationStatus: {
-          type: "string",
-          description: "Registration status on-chain",
-        },
         createdAt: { type: "string", description: "Node creation timestamp" },
       },
     },
