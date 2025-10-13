@@ -29,7 +29,6 @@ export class NodeController {
           description: "Registration status on-chain",
         },
         createdAt: { type: "string", description: "Node creation timestamp" },
-        contractAddress: { type: "string", description: "Contract address" },
       },
     },
   })
@@ -59,7 +58,6 @@ export class NodeController {
           type: "string",
           description: "Transaction hash (if new registration)",
         },
-        contractAddress: { type: "string", description: "Contract address" },
       },
     },
   })
@@ -71,7 +69,6 @@ export class NodeController {
     return {
       ...result,
       nodeId: nodeState.nodeId,
-      contractAddress: nodeState.contractAddress,
     };
   }
 
