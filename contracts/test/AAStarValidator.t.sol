@@ -165,12 +165,18 @@ contract AAStarValidatorTest is Test {
         validator.registerPublicKey(NODE_ID_1, PARTICIPANT_KEY_2);
     }
 
-    function test_RegisterPublicKey_OnlyOwner() public {
+    function test_RegisterPublicKey_AnyoneCanRegister() public {
+        // After removing onlyOwner modifier, anyone should be able to register
         address nonOwner = address(0x5678);
         vm.prank(nonOwner);
 
-        vm.expectRevert("Only owner can call this function");
+        vm.expectEmit(true, false, false, true);
+        emit PublicKeyRegistered(NODE_ID_1, PARTICIPANT_KEY_1);
+
         validator.registerPublicKey(NODE_ID_1, PARTICIPANT_KEY_1);
+
+        assertEq(validator.registeredKeys(NODE_ID_1), PARTICIPANT_KEY_1, "Key should be registered");
+        assertTrue(validator.isRegistered(NODE_ID_1), "Node should be marked as registered");
     }
 
     // =============================================================
