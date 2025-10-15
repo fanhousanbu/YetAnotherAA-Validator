@@ -123,6 +123,9 @@ export class DashboardController {
     const nodesWithKeys = nodes.filter(node => node.hasPrivateKey);
     const nodesWithoutKeys = nodes.filter(node => !node.hasPrivateKey);
 
+    // Check if there are any registered nodes with private keys
+    const hasRegisteredNode = nodesWithKeys.some(node => node.isRegistered);
+
     // Generate rows for nodes with private keys
     const privateKeyNodeRows = nodesWithKeys
       .map(
@@ -144,21 +147,16 @@ export class DashboardController {
             <button onclick="registerNode('${node.nodeId}')" class="btn btn-primary btn-sm">
               Register
             </button>
+            <button onclick="deletePrivateKey('${node.nodeId}')" class="btn btn-danger btn-sm">
+              Delete Key
+            </button>
             `
-                : ""
-            }
-            ${
-              node.isRegistered
-                ? `
+                : `
             <button onclick="revokeNode('${node.nodeId}')" class="btn btn-warning btn-sm">
               Revoke
             </button>
             `
-                : ""
             }
-            <button onclick="deletePrivateKey('${node.nodeId}')" class="btn btn-danger btn-sm">
-              Delete Key
-            </button>
           </div>
         </td>
       </tr>
@@ -301,6 +299,42 @@ export class DashboardController {
       font-size: 18px;
       font-family: 'JetBrains Mono', monospace;
       color: #60a5fa;
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+    }
+
+    .copy-btn:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .copy-btn:active {
+      transform: translateY(0);
+    }
+
+    .copy-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: #60a5fa;
+    }
+
+    .address-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .card {
@@ -641,8 +675,11 @@ export class DashboardController {
         <p>AAStarValidator - ERC-4337 Account Abstraction</p>
       </div>
       <div style="display: flex; align-items: center; gap: 12px;">
-        <button id="connectWalletBtn" onclick="toggleWallet()" class="btn btn-primary btn-sm">
-          👛 Connect Wallet
+        <button id="connectWalletBtn" onclick="toggleWallet()" class="btn btn-primary btn-sm" style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+            <path d="M21 18V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V6H12C10.9 6 10 6.9 10 8V16C10 17.1 10.9 18 12 18H21ZM12 16H22V8H12V16ZM16 13.5C15.17 13.5 14.5 12.83 14.5 12C14.5 11.17 15.17 10.5 16 10.5C16.83 10.5 17.5 11.17 17.5 12C17.5 12.83 16.83 13.5 16 13.5Z" fill="currentColor"/>
+          </svg>
+          <span>Connect Wallet</span>
         </button>
       </div>
     </div>
@@ -652,18 +689,27 @@ export class DashboardController {
         ? `
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">🚀 Current Running Node</h2>
+        <h2 class="card-title" style="display: flex; align-items: center; gap: 10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M12 2V4M12 20V22M22 12H20M4 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>Current Running Node</span>
+        </h2>
       </div>
       <div style="padding: 24px;">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div>
             <p style="margin-bottom: 8px;"><strong>Node ID:</strong></p>
-            <p style="font-family: monospace; color: #4a5568; cursor: pointer; display: flex; align-items: center; gap: 8px;"
-               onclick="copyToClipboard('${currentNode.nodeId}', this)"
-               title="Click to copy">
-              <span>${currentNode.nodeId}</span>
-              <span style="font-size: 12px; color: #667eea;">📋</span>
-            </p>
+            <div style="display: flex; align-items: center;">
+              <p style="font-family: monospace; color: #4a5568; margin: 0;" title="${currentNode.nodeId}">${currentNode.nodeId}</p>
+              <button class="copy-btn" onclick="copyToClipboard('${currentNode.nodeId}', this)" title="Copy Node ID">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div>
             <p style="margin-bottom: 8px;"><strong>Node Name:</strong></p>
@@ -738,7 +784,14 @@ export class DashboardController {
         : `
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">🚀 Current Running Node</h2>
+        <h2 class="card-title" style="display: flex; align-items: center; gap: 10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M12 2V4M12 20V22M22 12H20M4 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>Current Running Node</span>
+        </h2>
       </div>
       <div style="padding: 24px; text-align: center; color: #718096;">
         <p>No running node detected. Start a node with NODE_ID or NODE_STATE_FILE environment variable.</p>
@@ -758,7 +811,14 @@ export class DashboardController {
       </div>
       <div class="stat-card">
         <div class="stat-label">Contract Address</div>
-        <div class="stat-value small">${this.contractAddress.substring(0, 20)}...</div>
+        <div class="address-container">
+          <div class="stat-value small" title="${this.contractAddress}">${this.contractAddress.substring(0, 20)}...</div>
+          <button class="copy-btn" onclick="copyToClipboard('${this.contractAddress}', this)" title="Copy full address">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -768,7 +828,7 @@ export class DashboardController {
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">🔑 My Nodes (With Private Key)</h2>
-        <button onclick="createNode()" class="btn btn-success">➕ Create New Node</button>
+        <button onclick="createNode()" class="btn btn-success" ${hasRegisteredNode ? 'disabled title="Cannot create new node when registered node exists"' : ""}>➕ Create New Node</button>
       </div>
       <table>
         <thead>
@@ -790,7 +850,7 @@ export class DashboardController {
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">🔑 My Nodes (With Private Key)</h2>
-        <button onclick="createNode()" class="btn btn-success">➕ Create New Node</button>
+        <button onclick="createNode()" class="btn btn-success" ${hasRegisteredNode ? 'disabled title="Cannot create new node when registered node exists"' : ""}>➕ Create New Node</button>
       </div>
       <div style="padding: 40px; text-align: center; color: #718096;">
         <p>No local nodes found. Create your first node!</p>
@@ -876,11 +936,24 @@ export class DashboardController {
     // Copy to clipboard function
     function copyToClipboard(text, element) {
       navigator.clipboard.writeText(text).then(() => {
-        const originalHTML = element.innerHTML;
-        element.innerHTML = '<span style="color: #48bb78;">✓ Copied!</span>';
-        setTimeout(() => {
-          element.innerHTML = originalHTML;
-        }, 2000);
+        // Check if it's a button element
+        if (element.tagName === 'BUTTON') {
+          const originalHTML = element.innerHTML;
+          element.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px; fill: #34d399;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+          element.style.background = 'rgba(16, 185, 129, 0.1)';
+          element.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+          setTimeout(() => {
+            element.innerHTML = originalHTML;
+            element.style.background = '';
+            element.style.borderColor = '';
+          }, 2000);
+        } else {
+          const originalHTML = element.innerHTML;
+          element.innerHTML = '<span style="color: #48bb78;">✓ Copied!</span>';
+          setTimeout(() => {
+            element.innerHTML = originalHTML;
+          }, 2000);
+        }
         showToast('✅ Copied to clipboard!');
       }).catch(err => {
         showToast('❌ Failed to copy: ' + err.message);
@@ -967,7 +1040,7 @@ export class DashboardController {
 
     function updateWalletUI(address) {
       const btn = document.getElementById('connectWalletBtn');
-      btn.textContent = '🔌 Disconnect';
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;"><path d="M13 3L4 14H11L10 21L19 10H12L13 3Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Disconnect</span>';
       btn.classList.remove('btn-primary');
       btn.classList.add('btn-danger');
       userWalletAddress = address;
@@ -975,7 +1048,7 @@ export class DashboardController {
 
     function resetWalletUI() {
       const btn = document.getElementById('connectWalletBtn');
-      btn.textContent = '👛 Connect Wallet';
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;"><path d="M21 18V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V6H12C10.9 6 10 6.9 10 8V16C10 17.1 10.9 18 12 18H21ZM12 16H22V8H12V16ZM16 13.5C15.17 13.5 14.5 12.83 14.5 12C14.5 11.17 15.17 10.5 16 10.5C16.83 10.5 17.5 11.17 17.5 12C17.5 12.83 16.83 13.5 16 13.5Z" fill="currentColor"/></svg><span>Connect Wallet</span>';
       btn.classList.remove('btn-danger');
       btn.classList.add('btn-primary');
       userWalletAddress = null;
