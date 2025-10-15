@@ -119,42 +119,64 @@ export class DashboardController {
     registeredCount: number,
     walletAddress: string | null
   ): string {
-    const nodeRows = nodes
+    // Separate nodes with and without private keys
+    const nodesWithKeys = nodes.filter(node => node.hasPrivateKey);
+    const nodesWithoutKeys = nodes.filter(node => !node.hasPrivateKey);
+
+    // Generate rows for nodes with private keys
+    const privateKeyNodeRows = nodesWithKeys
       .map(
         node => `
       <tr>
-        <td class="px-4 py-3 text-sm font-mono">${node.nodeId.substring(0, 20)}...</td>
+        <td class="px-4 py-3 text-sm font-mono" title="${node.nodeId}">${node.nodeId.substring(0, 20)}...</td>
         <td class="px-4 py-3 text-sm">${node.metadata?.nodeName || "N/A"}</td>
         <td class="px-4 py-3 text-sm text-center">
           <span class="status-badge ${node.isRegistered ? "status-registered" : "status-pending"}">
             ${node.isRegistered ? "✓ On-Chain" : "✗ Not Registered"}
           </span>
         </td>
-        <td class="px-4 py-3 text-sm text-center">
-          <span class="status-badge ${node.hasPrivateKey ? "status-registered" : "status-failed"}">
-            ${node.hasPrivateKey ? "✓ Yes" : "✗ No"}
-          </span>
-        </td>
         <td class="px-4 py-3 text-sm">${node.metadata?.createdAt ? new Date(node.metadata.createdAt).toLocaleString() : "N/A"}</td>
         <td class="px-4 py-3 text-sm">
           <div class="flex space-x-2">
-            <button onclick="registerNode('${node.nodeId}')"
-                    class="btn btn-primary btn-sm"
-                    ${node.isRegistered ? "disabled" : ""}>
+            ${
+              !node.isRegistered
+                ? `
+            <button onclick="registerNode('${node.nodeId}')" class="btn btn-primary btn-sm">
               Register
             </button>
-            <button onclick="revokeNode('${node.nodeId}')"
-                    class="btn btn-warning btn-sm"
-                    ${!node.isRegistered ? "disabled" : ""}>
+            `
+                : ""
+            }
+            ${
+              node.isRegistered
+                ? `
+            <button onclick="revokeNode('${node.nodeId}')" class="btn btn-warning btn-sm">
               Revoke
             </button>
-            <button onclick="deletePrivateKey('${node.nodeId}')"
-                    class="btn btn-danger btn-sm"
-                    ${!node.hasPrivateKey ? "disabled" : ""}>
+            `
+                : ""
+            }
+            <button onclick="deletePrivateKey('${node.nodeId}')" class="btn btn-danger btn-sm">
               Delete Key
             </button>
           </div>
         </td>
+      </tr>
+    `
+      )
+      .join("");
+
+    // Generate rows for nodes without private keys (chain-only nodes)
+    const chainNodeRows = nodesWithoutKeys
+      .map(
+        node => `
+      <tr class="chain-node-row">
+        <td class="px-4 py-3 text-sm font-mono" title="${node.nodeId}">${node.nodeId.substring(0, 20)}...</td>
+        <td class="px-4 py-3 text-sm">${node.metadata?.nodeName || "N/A"}</td>
+        <td class="px-4 py-3 text-sm text-center">
+          <span class="status-badge status-registered">✓ On-Chain</span>
+        </td>
+        <td class="px-4 py-3 text-sm">${node.metadata?.createdAt ? new Date(node.metadata.createdAt).toLocaleString() : "N/A"}</td>
       </tr>
     `
       )
@@ -168,169 +190,303 @@ export class DashboardController {
   <title>Dashboard - AAStarValidator</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0a0e27;
       min-height: 100vh;
-      padding: 20px;
-    }
-    .container { max-width: 1400px; margin: 0 auto; }
-    .header {
-      background: white;
-      border-radius: 12px;
       padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      color: #e2e8f0;
     }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+    }
+
     .header h1 {
-      font-size: 28px;
-      color: #1a202c;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 8px;
+      letter-spacing: -0.02em;
     }
-    .header p { color: #718096; font-size: 14px; }
+
+    .header p {
+      color: #94a3b8;
+      font-size: 15px;
+      font-weight: 500;
+    }
     .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
     }
+
     .stat-card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 24px;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
     }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
     .stat-label {
-      font-size: 12px;
-      color: #718096;
+      font-size: 13px;
+      color: #94a3b8;
       text-transform: uppercase;
       font-weight: 600;
-      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
     }
+
     .stat-value {
-      font-size: 24px;
-      color: #1a202c;
-      font-weight: bold;
+      font-size: 28px;
+      color: #f1f5f9;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
-    .stat-value.small { font-size: 16px; font-family: monospace; }
+
+    .stat-value.small {
+      font-size: 18px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #60a5fa;
+    }
+
     .card {
-      background: white;
-      border-radius: 12px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      margin-bottom: 24px;
+      margin-bottom: 32px;
+      backdrop-filter: blur(10px);
     }
+
     .card-header {
-      background: #f7fafc;
-      padding: 20px 24px;
-      border-bottom: 1px solid #e2e8f0;
+      background: rgba(30, 41, 59, 0.5);
+      padding: 24px 32px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
+
     .card-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
-      color: #1a202c;
+      color: #f1f5f9;
+      letter-spacing: -0.01em;
     }
-    table { width: 100%; border-collapse: collapse; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
     th {
-      background: #f7fafc;
-      padding: 12px 16px;
+      background: rgba(30, 41, 59, 0.5);
+      padding: 16px 20px;
       text-align: left;
       font-size: 12px;
       font-weight: 600;
-      color: #4a5568;
+      color: #94a3b8;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
+
     td {
-      padding: 16px;
-      border-top: 1px solid #e2e8f0;
-    }
-    tr:hover { background: #f7fafc; }
-    .btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
+      padding: 20px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      color: #cbd5e1;
       font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
     }
+
+    tr:hover {
+      background: rgba(30, 41, 59, 0.3);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: -0.01em;
+    }
+
     .btn:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
+
     .btn-primary {
-      background: #667eea;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
+
     .btn-primary:hover:not(:disabled) {
-      background: #5568d3;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
     }
+
     .btn-warning {
-      background: #f6ad55;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
     }
+
     .btn-warning:hover:not(:disabled) {
-      background: #ed8936;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
     }
+
     .btn-danger {
-      background: #fc8181;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
+
     .btn-danger:hover:not(:disabled) {
-      background: #f56565;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
     }
+
     .btn-success {
-      background: #48bb78;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
+
     .btn-success:hover:not(:disabled) {
-      background: #38a169;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
     }
+
     .btn-sm {
-      padding: 6px 12px;
-      font-size: 12px;
+      padding: 8px 16px;
+      font-size: 13px;
     }
     .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
       font-size: 12px;
       font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
+
     .status-pending {
-      background: #fef5e7;
-      color: #d68910;
+      background: rgba(245, 158, 11, 0.1);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.2);
     }
+
     .status-registered {
-      background: #d4edda;
-      color: #155724;
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.2);
     }
+
     .status-failed {
-      background: #f8d7da;
-      color: #721c24;
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
     }
-    .flex { display: flex; }
-    .space-x-2 > * + * { margin-left: 8px; }
+
+    .flex {
+      display: flex;
+    }
+
+    .space-x-2 > * + * {
+      margin-left: 10px;
+    }
+
     .toast {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      background: white;
+      top: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(148, 163, 184, 0.2);
       padding: 16px 24px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
       display: none;
       z-index: 1000;
+      color: #f1f5f9;
+      font-weight: 500;
+      max-width: 400px;
     }
-    .toast.show { display: block; animation: slideIn 0.3s; }
+
+    .toast.show {
+      display: block;
+      animation: slideIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
     @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+      from {
+        transform: translateX(120%) scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
     }
 
     /* Modal styles */
@@ -340,71 +496,87 @@ export class DashboardController {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 2000;
-      animation: fadeIn 0.2s;
+      animation: fadeIn 0.3s ease;
     }
-    .modal-overlay.show { display: flex; }
+
+    .modal-overlay.show {
+      display: flex;
+    }
 
     .modal {
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      max-width: 500px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 520px;
       width: 90%;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      animation: slideUp 0.3s;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      animation: slideUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
 
     .modal-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #1a202c;
-      margin-bottom: 24px;
+      font-size: 26px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 28px;
+      letter-spacing: -0.01em;
     }
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     .form-label {
       display: block;
       font-size: 14px;
-      font-weight: 500;
-      color: #4a5568;
-      margin-bottom: 8px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
     }
 
     .form-input {
       width: 100%;
-      padding: 12px;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 14px;
-      transition: border-color 0.2s;
+      padding: 14px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 10px;
+      font-size: 15px;
+      color: #f1f5f9;
+      transition: all 0.2s ease;
       box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
     }
 
     .form-input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #3b82f6;
+      background: rgba(15, 23, 42, 0.8);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: #64748b;
     }
 
     .form-hint {
-      font-size: 12px;
-      color: #718096;
-      margin-top: 4px;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 6px;
     }
 
     .modal-actions {
       display: flex;
-      gap: 12px;
-      margin-top: 24px;
+      gap: 16px;
+      margin-top: 32px;
     }
 
     .modal-actions .btn {
@@ -412,13 +584,23 @@ export class DashboardController {
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     @keyframes slideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from {
+        transform: translateY(40px) scale(0.95);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
     }
 
     /* Mobile responsive */
@@ -453,30 +635,15 @@ export class DashboardController {
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>🔐 Dashboard - Signer Management</h1>
-      <p>AAStarValidator - ERC-4337 Account Abstraction</p>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">👛 Connect Wallet</h2>
+    <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1>🔐 Dashboard - Signer Management</h1>
+        <p>AAStarValidator - ERC-4337 Account Abstraction</p>
       </div>
-      <div style="padding: 24px;">
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-          <button id="connectWalletBtn" onclick="connectWallet()" class="btn btn-primary">
-            Connect MetaMask
-          </button>
-          <span id="walletStatus" style="color: #718096;">Not connected</span>
-        </div>
-        <div id="walletInfo" style="display: none;">
-          <p style="margin-bottom: 12px;">
-            <strong>Connected Wallet:</strong> <span id="connectedAddress" style="font-family: monospace;"></span>
-          </p>
-          <button id="registerWalletBtn" onclick="registerWallet()" class="btn btn-success">
-            Register Wallet On-Chain
-          </button>
-        </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button id="connectWalletBtn" onclick="toggleWallet()" class="btn btn-primary btn-sm">
+          👛 Connect Wallet
+        </button>
       </div>
     </div>
 
@@ -491,7 +658,12 @@ export class DashboardController {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div>
             <p style="margin-bottom: 8px;"><strong>Node ID:</strong></p>
-            <p style="font-family: monospace; color: #4a5568;">${currentNode.nodeId}</p>
+            <p style="font-family: monospace; color: #4a5568; cursor: pointer; display: flex; align-items: center; gap: 8px;"
+               onclick="copyToClipboard('${currentNode.nodeId}', this)"
+               title="Click to copy">
+              <span>${currentNode.nodeId}</span>
+              <span style="font-size: 12px; color: #667eea;">📋</span>
+            </p>
           </div>
           <div>
             <p style="margin-bottom: 8px;"><strong>Node Name:</strong></p>
@@ -588,15 +760,14 @@ export class DashboardController {
         <div class="stat-label">Contract Address</div>
         <div class="stat-value small">${this.contractAddress.substring(0, 20)}...</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Wallet Address</div>
-        <div class="stat-value small">${walletAddress ? walletAddress.substring(0, 20) + "..." : "Not configured"}</div>
-      </div>
     </div>
 
+    ${
+      nodesWithKeys.length > 0
+        ? `
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Node List (Chain Data)</h2>
+        <h2 class="card-title">🔑 My Nodes (With Private Key)</h2>
         <button onclick="createNode()" class="btn btn-success">➕ Create New Node</button>
       </div>
       <table>
@@ -605,16 +776,62 @@ export class DashboardController {
             <th>Node ID</th>
             <th>Name</th>
             <th>On-Chain Status</th>
-            <th>Has Private Key</th>
             <th>Created At</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          ${nodeRows || '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #718096;">No nodes found on-chain. Create and register your first node!</td></tr>'}
+          ${privateKeyNodeRows}
         </tbody>
       </table>
     </div>
+    `
+        : `
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">🔑 My Nodes (With Private Key)</h2>
+        <button onclick="createNode()" class="btn btn-success">➕ Create New Node</button>
+      </div>
+      <div style="padding: 40px; text-align: center; color: #718096;">
+        <p>No local nodes found. Create your first node!</p>
+      </div>
+    </div>
+    `
+    }
+
+    ${
+      nodesWithoutKeys.length > 0
+        ? `
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">🌐 Chain Registered Nodes (${nodesWithoutKeys.length} total)</h2>
+        <input type="text"
+               id="nodeSearch"
+               placeholder="Search by Node ID..."
+               class="form-input"
+               style="max-width: 300px; padding: 8px 12px;"
+               onkeyup="filterChainNodes()">
+      </div>
+      <table id="chainNodesTable">
+        <thead>
+          <tr>
+            <th>Node ID</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody id="chainNodesBody">
+          ${chainNodeRows}
+        </tbody>
+      </table>
+      <div id="chainNodesPagination" style="padding: 16px; text-align: center; color: #718096; font-size: 14px;">
+        Showing <span id="displayCount">0</span> of ${nodesWithoutKeys.length} nodes
+      </div>
+    </div>
+    `
+        : ""
+    }
   </div>
 
   <div id="toast" class="toast"></div>
@@ -646,17 +863,122 @@ export class DashboardController {
     let userWalletAddress = null;
     const contractAddress = '${this.contractAddress}';
 
-    // Contract ABI for registerSigner and isSignerRegistered
-    const contractABI = [
-      'function registerSigner(address signer) external',
-      'function isSignerRegistered(address signer) external view returns (bool)'
-    ];
+    // Contract ABI (kept for potential future use)
+    const contractABI = [];
 
     function showToast(message, duration = 3000) {
       const toast = document.getElementById('toast');
       toast.textContent = message;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // Copy to clipboard function
+    function copyToClipboard(text, element) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalHTML = element.innerHTML;
+        element.innerHTML = '<span style="color: #48bb78;">✓ Copied!</span>';
+        setTimeout(() => {
+          element.innerHTML = originalHTML;
+        }, 2000);
+        showToast('✅ Copied to clipboard!');
+      }).catch(err => {
+        showToast('❌ Failed to copy: ' + err.message);
+      });
+    }
+
+    // Filter chain nodes
+    function filterChainNodes() {
+      const searchInput = document.getElementById('nodeSearch');
+      if (!searchInput) return; // No search input, skip filtering
+
+      const searchValue = searchInput.value.toLowerCase();
+      const rows = document.querySelectorAll('.chain-node-row');
+      let visibleCount = 0;
+      let displayedCount = 0;
+      const maxDisplay = 10;
+
+      rows.forEach(row => {
+        const nodeId = row.querySelector('td').textContent.toLowerCase();
+        const matches = nodeId.includes(searchValue);
+
+        if (matches) {
+          visibleCount++;
+          if (displayedCount < maxDisplay) {
+            row.style.display = '';
+            displayedCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      const displayCountEl = document.getElementById('displayCount');
+      if (displayCountEl) {
+        displayCountEl.textContent = displayedCount;
+      }
+    }
+
+    // Initialize chain nodes display on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Only filter if search input exists
+      if (document.getElementById('nodeSearch')) {
+        filterChainNodes();
+      }
+
+      // Restore wallet connection from localStorage
+      const savedWallet = localStorage.getItem('connectedWallet');
+      if (savedWallet && typeof window.ethereum !== 'undefined') {
+        // Try to reconnect automatically
+        window.ethereum.request({ method: 'eth_accounts' })
+          .then(accounts => {
+            if (accounts.length > 0 && accounts[0].toLowerCase() === savedWallet.toLowerCase()) {
+              userWalletAddress = accounts[0];
+              updateWalletUI(accounts[0]);
+            } else {
+              localStorage.removeItem('connectedWallet');
+            }
+          })
+          .catch(err => {
+            console.error('Failed to restore wallet connection:', err);
+            localStorage.removeItem('connectedWallet');
+          });
+      }
+
+      // Listen for account changes
+      if (typeof window.ethereum !== 'undefined') {
+        window.ethereum.on('accountsChanged', (accounts) => {
+          if (accounts.length === 0) {
+            // User disconnected wallet
+            userWalletAddress = null;
+            localStorage.removeItem('connectedWallet');
+            resetWalletUI();
+          } else if (accounts[0] !== userWalletAddress) {
+            // User switched accounts
+            userWalletAddress = accounts[0];
+            localStorage.setItem('connectedWallet', accounts[0]);
+            updateWalletUI(accounts[0]);
+          }
+        });
+      }
+    });
+
+    function updateWalletUI(address) {
+      const btn = document.getElementById('connectWalletBtn');
+      btn.textContent = '🔌 Disconnect';
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-danger');
+      userWalletAddress = address;
+    }
+
+    function resetWalletUI() {
+      const btn = document.getElementById('connectWalletBtn');
+      btn.textContent = '👛 Connect Wallet';
+      btn.classList.remove('btn-danger');
+      btn.classList.add('btn-primary');
+      userWalletAddress = null;
     }
 
     async function connectWallet() {
@@ -667,72 +989,28 @@ export class DashboardController {
 
       try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        userWalletAddress = accounts[0];
 
-        document.getElementById('walletStatus').textContent = 'Connected ✅';
-        document.getElementById('walletStatus').style.color = '#48bb78';
-        document.getElementById('connectedAddress').textContent = userWalletAddress;
-        document.getElementById('walletInfo').style.display = 'block';
-        document.getElementById('connectWalletBtn').disabled = true;
+        // Save to localStorage
+        localStorage.setItem('connectedWallet', accounts[0]);
 
-        showToast('✅ Wallet connected successfully!');
+        updateWalletUI(accounts[0]);
+        showToast('✅ Wallet connected: ' + accounts[0].substring(0, 6) + '...' + accounts[0].substring(38));
       } catch (error) {
         showToast('❌ Failed to connect wallet: ' + error.message);
       }
     }
 
-    async function registerWallet() {
-      if (!userWalletAddress) {
-        showToast('❌ Please connect wallet first!');
-        return;
-      }
+    function disconnectWallet() {
+      localStorage.removeItem('connectedWallet');
+      resetWalletUI();
+      showToast('👋 Wallet disconnected');
+    }
 
-      if (!confirm('Register wallet ' + userWalletAddress + ' on-chain? You will pay gas fees.')) return;
-
-      try {
-        document.getElementById('registerWalletBtn').disabled = true;
-        document.getElementById('registerWalletBtn').textContent = 'Registering...';
-
-        // Use ethers.js to interact with the contract directly
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-        // Check if already registered
-        const isRegistered = await contract.isSignerRegistered(userWalletAddress);
-        if (isRegistered) {
-          showToast('ℹ️ Wallet is already registered on-chain');
-          document.getElementById('registerWalletBtn').textContent = 'Already Registered';
-          return;
-        }
-
-        // Call registerSigner - user pays gas
-        showToast('📝 Please confirm transaction in MetaMask...');
-        const tx = await contract.registerSigner(userWalletAddress);
-
-        showToast('⏳ Transaction submitted, waiting for confirmation...');
-        const receipt = await tx.wait();
-
-        showToast('✅ Wallet registered successfully! Block: ' + receipt.blockNumber);
-        console.log('Transaction hash:', tx.hash);
-        console.log('Transaction receipt:', receipt);
-
-        document.getElementById('registerWalletBtn').textContent = 'Registered ✅';
-      } catch (error) {
-        console.error('Registration error:', error);
-        let errorMessage = 'Failed to register wallet';
-
-        if (error.code === 4001) {
-          errorMessage = 'Transaction rejected by user';
-        } else if (error.code === -32603) {
-          errorMessage = 'Insufficient funds for gas';
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-
-        showToast('❌ ' + errorMessage);
-        document.getElementById('registerWalletBtn').disabled = false;
-        document.getElementById('registerWalletBtn').textContent = 'Register Wallet On-Chain';
+    async function toggleWallet() {
+      if (userWalletAddress) {
+        disconnectWallet();
+      } else {
+        await connectWallet();
       }
     }
 
