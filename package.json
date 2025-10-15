@@ -35,7 +35,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.0",
-    "@types/node": "^24.7.0",
+    "@types/node": "^24.7.2",
     "@types/uuid": "^11.0.0",
     "@types/ws": "^8.18.1",
     "axios": "^1.12.2",
@@ -74,6 +74,6 @@
     "jest": "^30.2.0",
     "prettier": "^3.6.2",
     "prettier-plugin-solidity": "^2.1.0",
-    "ts-jest": "^29.4.4"
+    "ts-jest": "^29.4.5"
   }
 }
