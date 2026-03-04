@@ -2,6 +2,8 @@ data/*
 
 # Private keys directory (contains sensitive BLS private keys)
 .keys/
+.agent/
+.env
 
 # Node development config files
 node_dev_*.json

@@ -8,6 +8,7 @@ import { randomBytes } from "crypto";
 import { writeFileSync, existsSync } from "fs";
 import { join } from "path";
 import { CreateNodeDto } from "./dto/create-node.dto.js";
+import { ImportNodeDto } from "./dto/import-node.dto.js";
 
 export interface NodeInfo {
   nodeId: string;
@@ -137,6 +138,47 @@ export class DashboardService {
       metadata: {
         nodeName,
         description,
+        createdAt: nodeState.createdAt,
+      },
+    };
+  }
+
+  /**
+   * Import an existing node state (restore a previously registered node)
+   */
+  async importNode(dto: ImportNodeDto): Promise<NodeInfo> {
+    this.logger.log(`Importing node ${dto.nodeId.substring(0, 12)}...`);
+
+    if (existsSync(this.nodeStateFilePath)) {
+      throw new Error("Node already exists. Delete current node first.");
+    }
+
+    const nodeState: NodeState = {
+      nodeId: dto.nodeId,
+      nodeName: dto.nodeName || `imported_${dto.nodeId.substring(2, 10)}`,
+      privateKey: dto.privateKey,
+      publicKey: dto.publicKey,
+      createdAt: new Date().toISOString(),
+      description: dto.description || `Imported node ${dto.nodeId.substring(0, 12)}...`,
+    };
+
+    writeFileSync(this.nodeStateFilePath, JSON.stringify(nodeState, null, 2), "utf8");
+    this.nodeService.reloadNodeState();
+
+    const isRegistered = await this.blockchainService
+      .checkNodeRegistration(this.contractAddress, dto.nodeId)
+      .catch(() => false);
+
+    this.logger.log(`Node imported: ${dto.nodeId} (registered: ${isRegistered})`);
+
+    return {
+      nodeId: dto.nodeId,
+      publicKey: dto.publicKey,
+      isRegistered,
+      hasPrivateKey: true,
+      metadata: {
+        nodeName: nodeState.nodeName,
+        description: nodeState.description,
         createdAt: nodeState.createdAt,
       },
     };

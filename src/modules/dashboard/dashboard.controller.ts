@@ -16,6 +16,7 @@ import { BlockchainService } from "../blockchain/blockchain.service.js";
 import { ConfigService } from "@nestjs/config";
 import type { Response } from "express";
 import { CreateNodeDto } from "./dto/create-node.dto.js";
+import { ImportNodeDto } from "./dto/import-node.dto.js";
 
 @ApiTags("dashboard")
 @Controller("dashboard")
@@ -66,6 +67,14 @@ export class DashboardController {
   @ApiResponse({ status: 201, description: "Node created successfully" })
   async createNode(@Body() dto: CreateNodeDto): Promise<NodeInfo> {
     return this.dashboardService.createNode(dto);
+  }
+
+  @Post("import-node")
+  @ApiOperation({ summary: "Import an existing node state (restore a registered node)" })
+  @ApiBody({ type: ImportNodeDto })
+  @ApiResponse({ status: 201, description: "Node imported successfully" })
+  async importNode(@Body() dto: ImportNodeDto): Promise<NodeInfo> {
+    return this.dashboardService.importNode(dto);
   }
 
   @Delete("current-node")
